@@ -5,15 +5,17 @@ Este agente ligero expone métricas del sistema, auditoría de seguridad SSH, ma
 ## Arquitectura
 
 - **Core**: Node.js + `systeminformation` (Interacción con Kernel/OS).
-- **Seguridad**: Parseo nativo de logs de autenticación (Linux) y control de acceso API Key.
-- **Red**: Análisis de tabla de conexiones TCP/UDP.
+- **Seguridad**: 
+    - Parseo nativo de logs de autenticación.
+    - Auditoría automática (Score).
+    - Mapa de amenazas (Geolocalización IP).
 - **SysAdmin**: Monitoreo de Docker (Socket) y Systemd.
 
 ## Requisitos
 
 - Node.js (v14 o superior).
-- **Linux**: Permisos de lectura en `/var/log/auth.log` (o root) para auditoría SSH.
-- **Docker**: Usuario debe pertenecer al grupo `docker` para ver métricas de contenedores.
+- **Linux**: Permisos de lectura en `/var/log/auth.log` (o root) para auditoría SSH y `ufw`.
+- **Docker**: Usuario debe pertenecer al grupo `docker`.
 
 ## Instalación
 
@@ -35,36 +37,32 @@ npm install -g pm2
 sudo pm2 start index.js --name "monitor-agent"
 ```
 
-## Colección Postman
-
-Se incluye un archivo `monitor-agent.postman_collection.json` en la raíz del proyecto.
-
 ## API Endpoints
 
 Puerto default: `3456`. Header Auth: `x-api-key: secret-agent-key`.
 
-### 1. Métricas Generales
+### 1. Métricas & Sistema
 - `GET /health` (Público): Estado del servicio.
 - `GET /metrics` (Auth): CPU, RAM, Disco, Top Procesos.
 - `GET /system` (Auth): Hardware y OS.
 
-### 2. Seguridad & Red
-- `GET /security/ssh`: Auditoría de logs de autenticación (Brute force detection).
-- `GET /network/connections`: Tabla de conexiones activas y puertos escuchando.
+### 2. Seguridad Avanzada (NUEVO)
+- `GET /security/audit`: **Puntuación de Seguridad (0-100)**.
+    - Analiza configuración SSH, Firewall, usuario root y puertos expuestos.
+    - Retorna hallazgos (High/Medium/Low) y grado (A-F).
+- `GET /network/map`: **Mapa de Amenazas**.
+    - Geolocaliza IPs conectadas al servidor (País, Ciudad, ISP).
+    - Útil para visualizar origen de conexiones.
+- `GET /security/ssh`: Auditoría de logs de autenticación (Brute force).
+- `GET /network/connections`: Tabla de conexiones raw.
 
-### 3. Herramientas SysAdmin (Avanzado)
-
-#### Docker
+### 3. Herramientas SysAdmin
 - `GET /system/docker`: Lista de contenedores.
-- `GET /system/docker/:id/inspect`: (NUEVO) JSON completo de `docker inspect`.
-- `GET /system/docker/:id/logs`: (NUEVO) Últimas líneas de logs (`?lines=50`).
-
-#### Servicios (Systemd)
-- `GET /system/services?name=nginx`: Estado simple (running/stopped).
-- `GET /system/services/:name/status`: (NUEVO) Salida completa de `systemctl status`.
-- `GET /system/services/:name/logs`: (NUEVO) Logs recientes de journalctl (`?lines=50`).
-
-#### Usuarios
+- `GET /system/docker/:id/inspect`: Detalle JSON de contenedor.
+- `GET /system/docker/:id/logs`: Logs de contenedor.
+- `GET /system/services?name=nginx`: Estado de servicio.
+- `GET /system/services/:name/status`: Status detallado systemctl.
+- `GET /system/services/:name/logs`: Logs journalctl.
 - `GET /system/users`: Usuarios conectados.
 
 ## Configuración

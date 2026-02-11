@@ -1,4 +1,5 @@
 const metrics = require('../metrics');
+const security = require('../security');
 const config = require('../config');
 
 /**
@@ -38,31 +39,23 @@ async function routes(fastify, options) {
     return { data };
   });
 
-  // --- Nuevos Endpoints de Seguridad y Red ---
+  // --- Endpoints de Seguridad y Red ---
 
-  // Obtener conexiones de red activas (Mapeo de red local)
   fastify.get('/network/connections', async (request, reply) => {
     try {
       const connections = await metrics.getNetworkConnections();
-      
-      // Resumen estadístico
       const summary = {
         total: connections.length,
         listening: connections.filter(c => c.state === 'LISTEN').length,
         established: connections.filter(c => c.state === 'ESTABLISHED').length
       };
-
-      return { 
-        summary,
-        connections 
-      };
+      return { summary, connections };
     } catch (e) {
       request.log.error(e);
       reply.code(500).send({ error: 'Failed to get network connections' });
     }
   });
 
-  // Obtener actividad SSH (Seguridad)
   fastify.get('/security/ssh', async (request, reply) => {
     try {
       const activity = await metrics.getSshActivity();
@@ -73,15 +66,35 @@ async function routes(fastify, options) {
     }
   });
 
-  // --- Nuevos Endpoints SysAdmin ---
+  // NUEVO: Auditoría de Seguridad (Score)
+  fastify.get('/security/audit', async (request, reply) => {
+    try {
+      const audit = await security.runSecurityAudit();
+      return { audit };
+    } catch (e) {
+      request.log.error(e);
+      reply.code(500).send({ error: 'Security audit failed', details: e.message });
+    }
+  });
 
-  // Docker Stats (Lista)
+  // NUEVO: Mapa de Amenazas (Geolocalización)
+  fastify.get('/network/map', async (request, reply) => {
+    try {
+      const map = await security.getThreatMap();
+      return { map };
+    } catch (e) {
+      request.log.error(e);
+      reply.code(500).send({ error: 'Threat map generation failed', details: e.message });
+    }
+  });
+
+  // --- Endpoints SysAdmin ---
+
   fastify.get('/system/docker', async (request, reply) => {
     const data = await metrics.getDockerStats();
     return { data };
   });
 
-  // Docker Logs
   fastify.get('/system/docker/:id/logs', async (request, reply) => {
     const { id } = request.params;
     const { lines } = request.query;
@@ -93,7 +106,6 @@ async function routes(fastify, options) {
     }
   });
 
-  // Docker Inspect (Detalle Completo)
   fastify.get('/system/docker/:id/inspect', async (request, reply) => {
     const { id } = request.params;
     try {
@@ -104,20 +116,17 @@ async function routes(fastify, options) {
     }
   });
 
-  // Users Active
   fastify.get('/system/users', async (request, reply) => {
     const data = await metrics.getUsers();
     return { count: data.length, users: data };
   });
 
-  // Services (Systemd List)
   fastify.get('/system/services', async (request, reply) => {
     const serviceName = request.query.name || '*';
     const data = await metrics.getServices(serviceName);
     return { services: data };
   });
 
-  // Service Logs (Journalctl)
   fastify.get('/system/services/:name/logs', async (request, reply) => {
     const { name } = request.params;
     const { lines } = request.query;
@@ -129,7 +138,6 @@ async function routes(fastify, options) {
     }
   });
 
-  // Service Status Detailed (Systemctl Status)
   fastify.get('/system/services/:name/status', async (request, reply) => {
     const { name } = request.params;
     try {
