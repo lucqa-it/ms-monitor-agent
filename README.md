@@ -35,6 +35,10 @@ npm install -g pm2
 sudo pm2 start index.js --name "monitor-agent"
 ```
 
+## Colección Postman
+
+Se incluye un archivo `monitor-agent.postman_collection.json` en la raíz del proyecto.
+
 ## API Endpoints
 
 Puerto default: `3456`. Header Auth: `x-api-key: secret-agent-key`.
@@ -48,46 +52,20 @@ Puerto default: `3456`. Header Auth: `x-api-key: secret-agent-key`.
 - `GET /security/ssh`: Auditoría de logs de autenticación (Brute force detection).
 - `GET /network/connections`: Tabla de conexiones activas y puertos escuchando.
 
-### 3. Herramientas SysAdmin
-Nuevos endpoints para administración avanzada:
+### 3. Herramientas SysAdmin (Avanzado)
 
-#### Docker Stats
-- **GET** `/system/docker`
-- **Descripción**: Resumen de contenedores corriendo, imágenes y estado detallado de cada contenedor.
-```json
-{
-  "data": {
-    "info": { "running": 2, "stopped": 0, "images": 5 },
-    "containers": [
-      { "name": "nginx_proxy", "state": "running", "image": "nginx:latest", "ports": [...] }
-    ]
-  }
-}
-```
+#### Docker
+- `GET /system/docker`: Lista de contenedores.
+- `GET /system/docker/:id/inspect`: (NUEVO) JSON completo de `docker inspect`.
+- `GET /system/docker/:id/logs`: (NUEVO) Últimas líneas de logs (`?lines=50`).
 
-#### Servicios (Systemd/Init)
-- **GET** `/system/services?name=nginx`
-- **Query Param**: `name` (nombre del servicio o `*` para todos).
-- **Descripción**: Verifica si un servicio crítico está corriendo.
-```json
-{
-  "services": [
-    { "name": "nginx", "running": true, "pids": [1234] }
-  ]
-}
-```
+#### Servicios (Systemd)
+- `GET /system/services?name=nginx`: Estado simple (running/stopped).
+- `GET /system/services/:name/status`: (NUEVO) Salida completa de `systemctl status`.
+- `GET /system/services/:name/logs`: (NUEVO) Logs recientes de journalctl (`?lines=50`).
 
-#### Usuarios Conectados
-- **GET** `/system/users`
-- **Descripción**: Lista usuarios logueados actualmente (TTY/SSH).
-```json
-{
-  "count": 1,
-  "users": [
-    { "user": "admin", "tty": "pts/0", "ip": "192.168.1.50" }
-  ]
-}
-```
+#### Usuarios
+- `GET /system/users`: Usuarios conectados.
 
 ## Configuración
 Variables de entorno en `.env`:

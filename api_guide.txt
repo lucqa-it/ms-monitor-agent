@@ -1,0 +1,1176 @@
+DOCUMENTACIÓN DE API - MONITOR AGENT
+Host: http://monitor.local.lucqa
+API Key: secret-agent-key
+Generado: 2026-02-11T18:28:08.298Z
+
+================================================================================
+
+### Health Check
+Method: GET
+URL: http://monitor.local.lucqa/health
+Headers: (Ninguno)
+
+Status: 200
+Body:
+{
+  "status": "ok",
+  "uptime": 2826.179632705
+}
+
+--------------------------------------------------------------------------------
+
+### System Info
+Method: GET
+URL: http://monitor.local.lucqa/system
+Headers: { "x-api-key": "secret-agent-key" }
+
+Status: 200
+Body:
+{
+  "data": {
+    "os": {
+      "platform": "linux",
+      "distro": "Ubuntu",
+      "release": "22.04.5 LTS",
+      "hostname": "lim-lucqa-001"
+    },
+    "hardware": {
+      "manufacturer": "HP",
+      "model": "HP Z240 SFF Workstation",
+      "cpu": "Intel Core™ i7-6700",
+      "cores": 8
+    },
+    "network": {
+      "interfaces": [
+        {
+          "iface": "lo",
+          "ip4": "127.0.0.1",
+          "mac": "00:00:00:00:00:00",
+          "type": "virtual",
+          "operstate": "unknown"
+        },
+        {
+          "iface": "eno1",
+          "ip4": "192.168.10.10",
+          "mac": "a0:8c:fd:cb:a2:7a",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "tun0",
+          "ip4": "10.8.0.1",
+          "mac": "00:00:00:00:00:00",
+          "type": "unknown",
+          "operstate": "unknown"
+        },
+        {
+          "iface": "br-294beb14502a",
+          "ip4": "172.20.0.1",
+          "mac": "5e:aa:2c:71:57:f1",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "veth33383e3",
+          "ip4": "",
+          "mac": "d2:e5:90:09:6f:56",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "vethe301a4e",
+          "ip4": "",
+          "mac": "06:b7:d8:17:0d:75",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "veth6db5ed5",
+          "ip4": "",
+          "mac": "36:bd:7d:52:d1:db",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "veth928ec3f",
+          "ip4": "",
+          "mac": "46:08:5c:3a:72:35",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "veth1bd669d",
+          "ip4": "",
+          "mac": "be:ff:af:78:12:eb",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "veth38a65f0",
+          "ip4": "",
+          "mac": "d2:88:3f:27:51:b7",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "veth03e4d1c",
+          "ip4": "",
+          "mac": "1a:f1:e7:8f:80:b8",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "vethd5eb975",
+          "ip4": "",
+          "mac": "1e:51:37:a9:52:6e",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "vethe4baace",
+          "ip4": "",
+          "mac": "86:2f:20:8c:bf:e9",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "veth9ebc85f",
+          "ip4": "",
+          "mac": "0a:d3:03:f3:b0:dc",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "veth99fca9a",
+          "ip4": "",
+          "mac": "72:dc:ef:4f:de:05",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "veth407b889",
+          "ip4": "",
+          "mac": "5e:9c:bc:98:85:f3",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "vethe7aed07",
+          "ip4": "",
+          "mac": "fa:96:75:92:b4:46",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "vethdaae7b0",
+          "ip4": "",
+          "mac": "be:ef:45:8e:53:bb",
+          "type": "wired",
+          "operstate": "up"
+        },
+        {
+          "iface": "veth80ce3e3",
+          "ip4": "",
+          "mac": "46:aa:67:2b:d5:e2",
+          "type": "wired",
+          "operstate": "up"
+        }
+      ]
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+
+### Real-time Metrics
+Method: GET
+URL: http://monitor.local.lucqa/metrics
+Headers: { "x-api-key": "secret-agent-key" }
+
+Status: 200
+Body:
+{
+  "data": {
+    "timestamp": "2026-02-11T18:28:10.131Z",
+    "metrics": {
+      "currentLoad": {
+        "currentLoad": 1.125269769209182,
+        "currentLoadUser": 0.7803128701953763,
+        "currentLoadSystem": 0.3449568990138057
+      },
+      "mem": {
+        "total": 16541421568,
+        "free": 300863488,
+        "used": 16240558080,
+        "active": 3943014400,
+        "available": 12598407168
+      },
+      "fsSize": [
+        {
+          "fs": "/dev/mapper/ubuntu--vg-ubuntu--lv",
+          "type": "ext4",
+          "size": 61075263488,
+          "used": 50889621504,
+          "available": 7049981952,
+          "mount": "/"
+        },
+        {
+          "fs": "/dev/sda2",
+          "type": "ext4",
+          "size": 2040373248,
+          "used": 264826880,
+          "available": 1651396608,
+          "mount": "/boot"
+        },
+        {
+          "fs": "/dev/sda1",
+          "type": "vfat",
+          "size": 1124995072,
+          "used": 6381568,
+          "available": 1118613504,
+          "mount": "/boot/efi"
+        },
+        {
+          "fs": "/dev/loop7",
+          "type": "ext4",
+          "size": 1015308288,
+          "used": 159744,
+          "available": 987885568,
+          "mount": "/mnt/system"
+        },
+        {
+          "fs": "/dev/loop8",
+          "type": "ext4",
+          "size": 4315152384,
+          "used": 408875008,
+          "available": 3855945728,
+          "mount": "/mnt/system_big"
+        }
+      ],
+      "networkStats": [
+        {
+          "iface": "eno1",
+          "rx_bytes": 4317506220,
+          "tx_bytes": 539040005,
+          "rx_sec": 34488.28740391238,
+          "tx_sec": 939.4519344189619
+        }
+      ],
+      "processes": {
+        "all": 303,
+        "running": 1,
+        "blocked": 0,
+        "sleeping": 212,
+        "top10": [
+          {
+            "pid": 1,
+            "name": "systemd",
+            "cpu": "0.19",
+            "mem": "0.00",
+            "user": "root"
+          },
+          {
+            "pid": 3227,
+            "name": "redis-server",
+            "cpu": "0.15",
+            "mem": "0.00",
+            "user": "lxd"
+          },
+          {
+            "pid": 2878,
+            "name": "containerd-shim-runc-v2",
+            "cpu": "0.13",
+            "mem": "0.00",
+            "user": "root"
+          },
+          {
+            "pid": 1739489,
+            "name": "node",
+            "cpu": "0.09",
+            "mem": "0.40",
+            "user": "kdon"
+          },
+          {
+            "pid": 1124,
+            "name": "grafana",
+            "cpu": "0.08",
+            "mem": "0.60",
+            "user": "grafana"
+          },
+          {
+            "pid": 3150,
+            "name": "grafana",
+            "cpu": "0.08",
+            "mem": "0.60",
+            "user": "472"
+          },
+          {
+            "pid": 998,
+            "name": "node_exporter",
+            "cpu": "0.08",
+            "mem": "0.00",
+            "user": "nobody"
+          },
+          {
+            "pid": 2072,
+            "name": "dockerd",
+            "cpu": "0.06",
+            "mem": "0.30",
+            "user": "root"
+          },
+          {
+            "pid": 3638,
+            "name": "java",
+            "cpu": "0.04",
+            "mem": "5.30",
+            "user": "root"
+          },
+          {
+            "pid": 3296,
+            "name": "postgres",
+            "cpu": "0.04",
+            "mem": "0.10",
+            "user": "70"
+          }
+        ]
+      }
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+
+### Network Connections
+Method: GET
+URL: http://monitor.local.lucqa/network/connections
+Headers: { "x-api-key": "secret-agent-key" }
+
+Status: 200
+Body:
+{
+  "summary": {
+    "total": 37,
+    "listening": 14,
+    "established": 10
+  },
+  "connections": [
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "8080",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "5433",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "5432",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "3142",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "127.0.0.1",
+      "localPort": "20241",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "44323",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "44322",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "44321",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "3456",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": "node"
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "1194",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "22",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "8200",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "80",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "0.0.0.0",
+      "localPort": "443",
+      "peerAddress": "0.0.0.0",
+      "peerPort": "*",
+      "state": "LISTEN",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "22",
+      "peerAddress": "192.168.10.13",
+      "peerPort": "62388",
+      "state": "ESTABLISHED",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "36678",
+      "peerAddress": "200.236.31.4",
+      "peerPort": "80",
+      "state": "CLOSE_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "35372",
+      "peerAddress": "192.168.10.10",
+      "peerPort": "3142",
+      "state": "TIME_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "43278",
+      "peerAddress": "198.41.192.167",
+      "peerPort": "7844",
+      "state": "ESTABLISHED",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "22",
+      "peerAddress": "192.168.10.12",
+      "peerPort": "63005",
+      "state": "ESTABLISHED",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "55576",
+      "peerAddress": "104.18.0.118",
+      "peerPort": "443",
+      "state": "TIME_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "172.20.0.1",
+      "localPort": "3456",
+      "peerAddress": "172.20.0.15",
+      "peerPort": "43596",
+      "state": "ESTABLISHED",
+      "process": "node"
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "54340",
+      "peerAddress": "198.41.192.67",
+      "peerPort": "7844",
+      "state": "ESTABLISHED",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "35380",
+      "peerAddress": "192.168.10.10",
+      "peerPort": "3142",
+      "state": "TIME_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "35360",
+      "peerAddress": "192.168.10.10",
+      "peerPort": "3142",
+      "state": "TIME_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "3142",
+      "peerAddress": "192.168.10.10",
+      "peerPort": "35324",
+      "state": "TIME_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "172.20.0.1",
+      "localPort": "3456",
+      "peerAddress": "172.20.0.15",
+      "peerPort": "55150",
+      "state": "TIME_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "35328",
+      "peerAddress": "192.168.10.10",
+      "peerPort": "3142",
+      "state": "TIME_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "127.0.0.1",
+      "localPort": "34706",
+      "peerAddress": "127.0.0.1",
+      "peerPort": "9090",
+      "state": "ESTABLISHED",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "50480",
+      "peerAddress": "54.230.124.38",
+      "peerPort": "443",
+      "state": "TIME_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "127.0.0.1",
+      "localPort": "33374",
+      "peerAddress": "127.0.0.1",
+      "peerPort": "9100",
+      "state": "ESTABLISHED",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "127.0.0.1",
+      "localPort": "44902",
+      "peerAddress": "127.0.0.1",
+      "peerPort": "9100",
+      "state": "ESTABLISHED",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "57054",
+      "peerAddress": "185.125.190.82",
+      "peerPort": "80",
+      "state": "CLOSE_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "40786",
+      "peerAddress": "198.41.200.193",
+      "peerPort": "7844",
+      "state": "ESTABLISHED",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "49884",
+      "peerAddress": "198.41.200.13",
+      "peerPort": "7844",
+      "state": "ESTABLISHED",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "3142",
+      "peerAddress": "192.168.10.10",
+      "peerPort": "35358",
+      "state": "TIME_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "35392",
+      "peerAddress": "192.168.10.10",
+      "peerPort": "3142",
+      "state": "TIME_WAIT",
+      "process": ""
+    },
+    {
+      "protocol": "tcp",
+      "localAddress": "192.168.10.10",
+      "localPort": "35326",
+      "peerAddress": "192.168.10.10",
+      "peerPort": "3142",
+      "state": "TIME_WAIT",
+      "process": ""
+    }
+  ]
+}
+
+--------------------------------------------------------------------------------
+
+### SSH Audit Logs
+Method: GET
+URL: http://monitor.local.lucqa/security/ssh
+Headers: { "x-api-key": "secret-agent-key" }
+
+Status: 200
+Body:
+{
+  "activity": {
+    "status": "active",
+    "log_file": "/var/log/auth.log",
+    "summary": {
+      "failed_count": 0,
+      "success_count": 3
+    },
+    "details": {
+      "failed_attempts": [],
+      "successful_logins": [
+        {
+          "method": "password",
+          "user": "kdon",
+          "ip": "192.168.10.13",
+          "timestamp": "Feb 11 13:27:17"
+        },
+        {
+          "method": "password",
+          "user": "kdon",
+          "ip": "192.168.10.12",
+          "timestamp": "Feb 11 13:05:21"
+        },
+        {
+          "method": "password",
+          "user": "kdon",
+          "ip": "192.168.10.12",
+          "timestamp": "Feb 11 13:01:54"
+        }
+      ],
+      "sudo_usage": [
+        {
+          "raw": "Feb 11 13:27:52 lim-lucqa-001 sudo:     kdon : TTY=pts/1 ; PWD=/home/kdon ; USER=root ; COMMAND=/usr..."
+        },
+        {
+          "raw": "Feb 11 13:27:39 lim-lucqa-001 sudo:     kdon : TTY=pts/1 ; PWD=/home/kdon ; USER=root ; COMMAND=/usr..."
+        },
+        {
+          "raw": "Feb 11 13:14:17 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/home/kdon/servicios-cross/traefik ; ..."
+        },
+        {
+          "raw": "Feb 11 13:14:17 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/home/kdon/servicios-cross/traefik ; ..."
+        },
+        {
+          "raw": "Feb 11 13:14:09 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/home/kdon/servicios-cross/traefik ; ..."
+        },
+        {
+          "raw": "Feb 11 13:14:09 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/home/kdon/servicios-cross/traefik ; ..."
+        },
+        {
+          "raw": "Feb 11 13:04:00 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 13:03:53 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 13:03:50 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 13:03:30 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 13:02:59 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/home/kdon/servicios-cross/traefik ; ..."
+        },
+        {
+          "raw": "Feb 11 12:40:58 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 12:40:18 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 12:40:15 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 12:39:56 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 12:39:48 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 12:39:29 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 12:39:24 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 12:35:22 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 12:35:16 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        },
+        {
+          "raw": "Feb 11 12:34:41 lim-lucqa-001 sudo:     kdon : TTY=pts/0 ; PWD=/opt/ms/monitor/ms-monitor-agent ; US..."
+        }
+      ]
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+
+### Docker Stats
+Method: GET
+URL: http://monitor.local.lucqa/system/docker
+Headers: { "x-api-key": "secret-agent-key" }
+
+Status: 200
+Body:
+{
+  "data": {
+    "info": {
+      "containers": 16,
+      "running": 16,
+      "paused": 0,
+      "stopped": 0,
+      "images": 44
+    },
+    "containers": [
+      {
+        "id": "5a40e7901aa5",
+        "name": "ms-geo-data-service",
+        "image": "ghcr.io/lucqa-it/ms-geo-data-service:5cc978b",
+        "state": "running",
+        "created": "2026-02-10T19:52:50.553061771Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 8080,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "17c74aa0d629",
+        "name": "ms-ticket-service",
+        "image": "ghcr.io/lucqa-it/ms-ticket-service:263c617",
+        "state": "running",
+        "created": "2026-01-27T06:59:45.206175405Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 8080,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "c5ffda40d2ba",
+        "name": "ms-catalog-service",
+        "image": "ghcr.io/lucqa-it/ms-catalog-service:6efe2ba",
+        "state": "running",
+        "created": "2026-01-21T14:14:26.020289416Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 8080,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "512eec294151",
+        "name": "coredns",
+        "image": "coredns/coredns",
+        "state": "running",
+        "created": "2026-01-14T14:09:42.849452858Z",
+        "ports": []
+      },
+      {
+        "id": "719f533d6b70",
+        "name": "vault",
+        "image": "hashicorp/vault:1.15",
+        "state": "running",
+        "created": "2026-01-14T05:28:52.287678371Z",
+        "ports": [
+          {
+            "IP": "0.0.0.0",
+            "PrivatePort": 8200,
+            "PublicPort": 8200,
+            "Type": "tcp"
+          },
+          {
+            "IP": "::",
+            "PrivatePort": 8200,
+            "PublicPort": 8200,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "5dea8d6c743d",
+        "name": "n8n",
+        "image": "docker.n8n.io/n8nio/n8n",
+        "state": "running",
+        "created": "2026-01-13T15:46:05.917068413Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 5678,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "2586e2baf84c",
+        "name": "ms-auth-service-ms-auth-service-1",
+        "image": "ghcr.io/lucqa-it/ms-auth-service:58daa3b",
+        "state": "running",
+        "created": "2026-01-08T14:06:13.226298876Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 8080,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "308708bc3353",
+        "name": "traefik",
+        "image": "traefik:v3",
+        "state": "running",
+        "created": "2026-01-08T02:25:28.343319389Z",
+        "ports": [
+          {
+            "IP": "0.0.0.0",
+            "PrivatePort": 443,
+            "PublicPort": 443,
+            "Type": "tcp"
+          },
+          {
+            "IP": "::",
+            "PrivatePort": 443,
+            "PublicPort": 443,
+            "Type": "tcp"
+          },
+          {
+            "IP": "0.0.0.0",
+            "PrivatePort": 5432,
+            "PublicPort": 5432,
+            "Type": "tcp"
+          },
+          {
+            "IP": "::",
+            "PrivatePort": 5432,
+            "PublicPort": 5432,
+            "Type": "tcp"
+          },
+          {
+            "IP": "0.0.0.0",
+            "PrivatePort": 80,
+            "PublicPort": 80,
+            "Type": "tcp"
+          },
+          {
+            "IP": "::",
+            "PrivatePort": 80,
+            "PublicPort": 80,
+            "Type": "tcp"
+          },
+          {
+            "IP": "0.0.0.0",
+            "PrivatePort": 8080,
+            "PublicPort": 8080,
+            "Type": "tcp"
+          },
+          {
+            "IP": "::",
+            "PrivatePort": 8080,
+            "PublicPort": 8080,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "b3dd5fb80b35",
+        "name": "prometheus",
+        "image": "prom/prometheus:latest",
+        "state": "running",
+        "created": "2026-01-07T04:01:07.440261574Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 9090,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "7a5254ffdce0",
+        "name": "grafana",
+        "image": "grafana/grafana:latest",
+        "state": "running",
+        "created": "2026-01-07T04:01:07.438788446Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 3000,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "7d1ca6bdcd6e",
+        "name": "snmp-exporter",
+        "image": "prom/snmp-exporter:latest",
+        "state": "running",
+        "created": "2026-01-07T04:01:07.437537856Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 9116,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "1daf76bfa226",
+        "name": "redis",
+        "image": "redis:7-alpine",
+        "state": "running",
+        "created": "2026-01-06T21:53:55.010335002Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 6379,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "32488e9524d6",
+        "name": "jenkins",
+        "image": "jenkins/jenkins:lts-jdk21",
+        "state": "running",
+        "created": "2026-01-06T20:57:43.987335655Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 50000,
+            "Type": "tcp"
+          },
+          {
+            "IP": "",
+            "PrivatePort": 8080,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "0bfc4bc60b19",
+        "name": "excalidraw",
+        "image": "excalidraw/excalidraw:latest",
+        "state": "running",
+        "created": "2026-01-06T20:36:03.0980533Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 80,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "917edf69ecd7",
+        "name": "db-postgresql-postgres-1",
+        "image": "postgres:16-alpine",
+        "state": "running",
+        "created": "2026-01-06T20:03:38.868832949Z",
+        "ports": [
+          {
+            "IP": "0.0.0.0",
+            "PrivatePort": 5432,
+            "PublicPort": 5433,
+            "Type": "tcp"
+          },
+          {
+            "IP": "::",
+            "PrivatePort": 5432,
+            "PublicPort": 5433,
+            "Type": "tcp"
+          }
+        ]
+      },
+      {
+        "id": "8841ea81e223",
+        "name": "pgadmin",
+        "image": "dpage/pgadmin4:latest",
+        "state": "running",
+        "created": "2026-01-06T17:38:20.925868891Z",
+        "ports": [
+          {
+            "IP": "",
+            "PrivatePort": 443,
+            "Type": "tcp"
+          },
+          {
+            "IP": "",
+            "PrivatePort": 80,
+            "Type": "tcp"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+--------------------------------------------------------------------------------
+
+### Check Service Status (Docker)
+Method: GET
+URL: http://monitor.local.lucqa/system/services?name=docker
+Headers: { "x-api-key": "secret-agent-key" }
+
+Status: 200
+Body:
+{
+  "services": [
+    {
+      "name": "docker",
+      "running": true,
+      "startmode": "",
+      "pids": [
+        2072,
+        3236,
+        3268,
+        3650,
+        3660,
+        3739,
+        3747,
+        1748757,
+        1748764,
+        1748779,
+        1748785,
+        1748802,
+        1748809,
+        1748825,
+        1748832
+      ]
+    }
+  ]
+}
+
+--------------------------------------------------------------------------------
+
+### Active Users
+Method: GET
+URL: http://monitor.local.lucqa/system/users
+Headers: { "x-api-key": "secret-agent-key" }
+
+Status: 200
+Body:
+{
+  "count": 2,
+  "users": [
+    {
+      "user": "kdon",
+      "tty": "pts/0",
+      "date": "2026-02-11",
+      "time": "13:05",
+      "ip": "192.168.10.12",
+      "command": "-bash"
+    },
+    {
+      "user": "kdon",
+      "tty": "pts/1",
+      "date": "2026-02-11",
+      "time": "13:27",
+      "ip": "192.168.10.13",
+      "command": "-bash"
+    }
+  ]
+}
+
+--------------------------------------------------------------------------------

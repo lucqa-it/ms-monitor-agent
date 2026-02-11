@@ -1,8 +1,9 @@
 const si = require('systeminformation');
-const { exec } = require('child_process');
+const { exec, execFile } = require('child_process');
 const util = require('util');
 const fs = require('fs');
 const execPromise = util.promisify(exec);
+const execFilePromise = util.promisify(execFile);
 
 // Configuración de lo que queremos monitorear
 const valueObject = {
@@ -250,6 +251,40 @@ async function getDockerStats() {
 }
 
 /**
+ * Obtiene logs de un contenedor Docker
+ */
+async function getDockerLogs(containerId, lines = 50) {
+  // Validación básica para evitar inyección
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(containerId)) {
+    throw new Error('Invalid container ID');
+  }
+  const lineCount = parseInt(lines) || 50;
+
+  try {
+    const { stdout, stderr } = await execFilePromise('docker', ['logs', '--tail', lineCount.toString(), containerId]);
+    // Docker escribe logs a stdout y stderr indistintamente a veces
+    return stdout || stderr; 
+  } catch (e) {
+    return `Error retrieving logs: ${e.message}`;
+  }
+}
+
+/**
+ * Obtiene inspección detallada de un contenedor (Complex Status)
+ */
+async function getDockerInspect(containerId) {
+   if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-]*$/.test(containerId)) {
+    throw new Error('Invalid container ID');
+  }
+  try {
+    const { stdout } = await execFilePromise('docker', ['inspect', containerId]);
+    return JSON.parse(stdout)[0];
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+/**
  * Obtiene usuarios conectados al sistema
  */
 async function getUsers() {
@@ -263,7 +298,6 @@ async function getUsers() {
 
 /**
  * Obtiene estado de servicios (Systemd)
- * Nota: Puede ser pesado listar TODOS, por defecto filtramos los fallidos o importantes
  */
 async function getServices(serviceList = '*') {
   try {
@@ -279,12 +313,51 @@ async function getServices(serviceList = '*') {
   }
 }
 
+/**
+ * Obtiene logs de un servicio Systemd (journalctl)
+ */
+async function getServiceLogs(serviceName, lines = 50) {
+  // Validación estricta para nombre de servicio
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-@]*$/.test(serviceName)) {
+    throw new Error('Invalid service name');
+  }
+  const lineCount = parseInt(lines) || 50;
+
+  try {
+    // -u para unidad, --no-pager para texto plano, -n para líneas
+    const { stdout } = await execFilePromise('journalctl', ['-u', serviceName, '-n', lineCount.toString(), '--no-pager']);
+    return stdout;
+  } catch (e) {
+    return `Error retrieving service logs: ${e.message}`;
+  }
+}
+
+/**
+ * Obtiene status completo de systemd (systemctl status)
+ */
+async function getServiceStatusDetailed(serviceName) {
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-@]*$/.test(serviceName)) {
+    throw new Error('Invalid service name');
+  }
+  try {
+    const { stdout } = await execFilePromise('systemctl', ['status', serviceName, '--no-pager']);
+    return stdout;
+  } catch (e) {
+    // systemctl status retorna exit code no-cero si el servicio está fallando, pero queremos el output igual para diagnosticar
+    return e.stdout || e.message;
+  }
+}
+
 module.exports = {
   getStaticData,
   getDynamicData,
   getNetworkConnections,
   getSshActivity,
   getDockerStats,
+  getDockerLogs,
+  getDockerInspect,
   getUsers,
-  getServices
+  getServices,
+  getServiceLogs,
+  getServiceStatusDetailed
 };

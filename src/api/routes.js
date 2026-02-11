@@ -75,10 +75,33 @@ async function routes(fastify, options) {
 
   // --- Nuevos Endpoints SysAdmin ---
 
-  // Docker Stats
+  // Docker Stats (Lista)
   fastify.get('/system/docker', async (request, reply) => {
     const data = await metrics.getDockerStats();
     return { data };
+  });
+
+  // Docker Logs
+  fastify.get('/system/docker/:id/logs', async (request, reply) => {
+    const { id } = request.params;
+    const { lines } = request.query;
+    try {
+      const logs = await metrics.getDockerLogs(id, lines);
+      return { logs };
+    } catch (e) {
+      reply.code(400).send({ error: e.message });
+    }
+  });
+
+  // Docker Inspect (Detalle Completo)
+  fastify.get('/system/docker/:id/inspect', async (request, reply) => {
+    const { id } = request.params;
+    try {
+      const data = await metrics.getDockerInspect(id);
+      return { data };
+    } catch (e) {
+      reply.code(400).send({ error: e.message });
+    }
   });
 
   // Users Active
@@ -87,12 +110,34 @@ async function routes(fastify, options) {
     return { count: data.length, users: data };
   });
 
-  // Services (Systemd)
-  // Permite filtrar por query param ?name=nginx
+  // Services (Systemd List)
   fastify.get('/system/services', async (request, reply) => {
     const serviceName = request.query.name || '*';
     const data = await metrics.getServices(serviceName);
     return { services: data };
+  });
+
+  // Service Logs (Journalctl)
+  fastify.get('/system/services/:name/logs', async (request, reply) => {
+    const { name } = request.params;
+    const { lines } = request.query;
+    try {
+      const logs = await metrics.getServiceLogs(name, lines);
+      return { logs };
+    } catch (e) {
+      reply.code(400).send({ error: e.message });
+    }
+  });
+
+  // Service Status Detailed (Systemctl Status)
+  fastify.get('/system/services/:name/status', async (request, reply) => {
+    const { name } = request.params;
+    try {
+      const status = await metrics.getServiceStatusDetailed(name);
+      return { status };
+    } catch (e) {
+      reply.code(400).send({ error: e.message });
+    }
   });
 }
 

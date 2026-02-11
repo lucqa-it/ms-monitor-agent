@@ -1,0 +1,235 @@
+{
+	"info": {
+		"_postman_id": "monitor-agent-collection",
+		"name": "Monitor Agent API",
+		"description": "Colección completa para interactuar con el Agente de Monitoreo Ligero (Node.js). Incluye endpoints de métricas, seguridad y administración.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "General",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Verifica si el servicio está corriendo. No requiere autenticación."
+					},
+					"response": []
+				},
+				{
+					"name": "System Info (Static)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/system",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system"
+							]
+						},
+						"description": "Obtiene información estática del hardware y sistema operativo."
+					},
+					"response": []
+				},
+				{
+					"name": "Real-time Metrics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/metrics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metrics"
+							]
+						},
+						"description": "Obtiene métricas en tiempo real: CPU, RAM, Disco, Red y Top Procesos."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Security & Network",
+			"item": [
+				{
+					"name": "Network Connections",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/network/connections",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"network",
+								"connections"
+							]
+						},
+						"description": "Lista conexiones de red activas (ESTABLISHED) y puertos en escucha (LISTEN)."
+					},
+					"response": []
+				},
+				{
+					"name": "SSH Audit Logs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/security/ssh",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"security",
+								"ssh"
+							]
+						},
+						"description": "Analiza logs de autenticación SSH para detectar intentos fallidos y accesos exitosos. (Solo Linux)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "SysAdmin Tools",
+			"item": [
+				{
+					"name": "Docker Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/system/docker",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"docker"
+							]
+						},
+						"description": "Obtiene estado de contenedores Docker e imágenes."
+					},
+					"response": []
+				},
+				{
+					"name": "Check Service Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/system/services?name=docker",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"services"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "docker",
+									"description": "Nombre del servicio a consultar (o * para todos)"
+								}
+							]
+						},
+						"description": "Verifica el estado de un servicio del sistema (Systemd)."
+					},
+					"response": []
+				},
+				{
+					"name": "Active Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/system/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"users"
+							]
+						},
+						"description": "Lista usuarios conectados actualmente al sistema."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3456",
+			"type": "string"
+		},
+		{
+			"key": "apiKey",
+			"value": "secret-agent-key",
+			"type": "string"
+		}
+	]
+}
