@@ -44,19 +44,51 @@ async function runSecurityAudit() {
     }
   }
 
-  // 2. Verificar Firewall (UFW) - Solo Linux
+  // 2. Verificar Firewall (UFW, Firewalld, Iptables) - Solo Linux
   if (process.platform === 'linux') {
+    let firewallDetected = false;
+    
+    // Check A: UFW
     try {
       const { stdout } = await execPromise('sudo ufw status');
-      if (stdout.includes('inactive')) {
-        audit.score -= 20;
-        audit.findings.push({ severity: 'high', message: 'Firewall (UFW) is inactive' });
-      } else {
-        audit.details.firewall = 'active';
+      if (stdout.includes('Status: active')) {
+        audit.details.firewall = 'UFW (Active)';
+        firewallDetected = true;
+      } else if (stdout.includes('Status: inactive')) {
+         // UFW installed but inactive
+         // Don't penalize yet, check others
       }
-    } catch (e) {
-      // Puede que UFW no esté instalado, check iptables o simplemente warn
-      audit.findings.push({ severity: 'low', message: 'Could not verify UFW status (requires root or not installed)' });
+    } catch (e) {}
+
+    // Check B: Firewalld (CentOS/Fedora/RHEL)
+    if (!firewallDetected) {
+        try {
+            const { stdout } = await execPromise('systemctl is-active firewalld');
+            if (stdout.trim() === 'active') {
+                audit.details.firewall = 'Firewalld (Active)';
+                firewallDetected = true;
+            }
+        } catch (e) {}
+    }
+
+    // Check C: Iptables (Raw)
+    if (!firewallDetected) {
+        try {
+            // Check if there are rules. An empty chain usually has 3 lines (Input, Forward, Output) per table filter
+            // This is a rough check.
+            const { stdout } = await execPromise('sudo iptables -L -n | grep -v "Chain" | grep -v "target" | wc -l');
+            const lines = parseInt(stdout.trim());
+            if (lines > 0) {
+                audit.details.firewall = 'Iptables (Custom Rules Detected)';
+                firewallDetected = true;
+            }
+        } catch (e) {}
+    }
+
+    if (!firewallDetected) {
+      // Penalize only if NO firewall is detected at all
+      audit.score -= 20;
+      audit.findings.push({ severity: 'high', message: 'No active Firewall detected (Checked UFW, Firewalld, Iptables)' });
     }
   }
 
