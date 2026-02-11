@@ -152,6 +152,68 @@ async function runSecurityAudit() {
       }
   }
 
+  // 6. Verificar Recursos Críticos (Load, Disk, Swap)
+  try {
+      const dynData = await metrics.getDynamicData();
+      if (dynData && dynData.metrics) {
+          const m = dynData.metrics;
+
+          // Carga del Sistema (Load Average > Nº Cores)
+          const load = m.currentLoad.currentLoad;
+          if (load > 90) {
+              audit.score -= 10;
+              audit.findings.push({ severity: 'medium', message: `System Load is Critical (${load.toFixed(1)}%)` });
+          } else if (load > 70) {
+              audit.findings.push({ severity: 'low', message: `System Load is High (${load.toFixed(1)}%)` });
+          }
+
+          // Uso de Disco (> 90%)
+          m.fsSize.forEach(fs => {
+              if (fs.use > 90) {
+                  audit.score -= 10;
+                  audit.findings.push({ severity: 'high', message: `Disk usage critical on ${fs.mount} (${fs.use}%)` });
+              }
+          });
+
+          // Uso de Swap (> 80%)
+          // systeminformation mem.swaptotal puede ser 0
+          if (m.mem.swaptotal > 0) {
+              const swapPercent = (m.mem.swapused / m.mem.swaptotal) * 100;
+              if (swapPercent > 80) {
+                  audit.score -= 5;
+                  audit.findings.push({ severity: 'medium', message: `High Swap usage (${swapPercent.toFixed(1)}%)` });
+              }
+          }
+      }
+  } catch (e) {}
+
+  // 7. Verificar Actualizaciones de Seguridad Pendientes (Solo Linux - Debian/Ubuntu/RHEL)
+  // Esto puede ser lento, así que lo hacemos con timeout corto o async fire-and-forget si fuera necesario, 
+  // pero aquí lo haremos await con timeout.
+  if (process.platform === 'linux') {
+      try {
+          // Detectar gestor de paquetes
+          let updatesCmd = '';
+          if (fs.existsSync('/usr/bin/apt-get')) {
+              // Debian/Ubuntu: apt-get -s upgrade | grep "security updates" (es complejo parsear exacto sin update)
+              // Una forma rápida es checkear si existe el archivo /var/lib/update-notifier/updates-available
+              if (fs.existsSync('/var/lib/update-notifier/updates-available')) {
+                  const content = fs.readFileSync('/var/lib/update-notifier/updates-available', 'utf8');
+                  const match = content.match(/(\d+) updates are security updates/);
+                  if (match && parseInt(match[1]) > 0) {
+                      const count = parseInt(match[1]);
+                      audit.score -= (count * 2); // Penalizar por cada update
+                      audit.findings.push({ severity: 'high', message: `${count} Security updates pending installation` });
+                      audit.details.security_updates = count;
+                  }
+              }
+          } 
+          // RHEL/CentOS: yum check-update --security (requiere yum-plugin-security)
+          // Omitimos para no bloquear la request mucho tiempo
+      } catch (e) {}
+  }
+
+
   // Normalizar score
   audit.score = Math.max(0, audit.score);
   
