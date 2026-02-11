@@ -37,16 +37,17 @@ async function runSecurityAudit() {
           audit.findings.push({ severity: 'medium', message: 'SSH Password Authentication is enabled' });
         }
       } else {
-        audit.details.ssh = 'Config file not found or not readable';
+        audit.details.ssh = 'Config file not found or not readable (Check permissions)';
       }
     } catch (e) {
       audit.details.ssh_error = e.message;
     }
   }
 
-  // 2. Verificar Firewall (UFW, Firewalld, Iptables) - Solo Linux
+  // 2. Verificar Firewall (UFW, Firewalld, Iptables, Nftables) - Solo Linux
   if (process.platform === 'linux') {
     let firewallDetected = false;
+    let permissionError = false;
     
     // Check A: UFW
     try {
@@ -54,11 +55,10 @@ async function runSecurityAudit() {
       if (stdout.includes('Status: active')) {
         audit.details.firewall = 'UFW (Active)';
         firewallDetected = true;
-      } else if (stdout.includes('Status: inactive')) {
-         // UFW installed but inactive
-         // Don't penalize yet, check others
       }
-    } catch (e) {}
+    } catch (e) {
+        if (e.message.includes('Permission denied') || e.message.includes('sudo')) permissionError = true;
+    }
 
     // Check B: Firewalld (CentOS/Fedora/RHEL)
     if (!firewallDetected) {
@@ -74,21 +74,42 @@ async function runSecurityAudit() {
     // Check C: Iptables (Raw)
     if (!firewallDetected) {
         try {
-            // Check if there are rules. An empty chain usually has 3 lines (Input, Forward, Output) per table filter
-            // This is a rough check.
             const { stdout } = await execPromise('sudo iptables -L -n | grep -v "Chain" | grep -v "target" | wc -l');
             const lines = parseInt(stdout.trim());
             if (lines > 0) {
                 audit.details.firewall = 'Iptables (Custom Rules Detected)';
                 firewallDetected = true;
             }
-        } catch (e) {}
+        } catch (e) {
+            if (e.message.includes('Permission denied') || e.message.includes('sudo')) permissionError = true;
+        }
+    }
+
+    // Check D: Nftables (Modern Linux)
+    if (!firewallDetected) {
+        try {
+            const { stdout } = await execPromise('sudo nft list ruleset | wc -l');
+            const lines = parseInt(stdout.trim());
+            if (lines > 0) {
+                audit.details.firewall = 'Nftables (Active Ruleset)';
+                firewallDetected = true;
+            }
+        } catch (e) {
+            if (e.message.includes('Permission denied') || e.message.includes('sudo')) permissionError = true;
+        }
     }
 
     if (!firewallDetected) {
-      // Penalize only if NO firewall is detected at all
-      audit.score -= 20;
-      audit.findings.push({ severity: 'high', message: 'No active Firewall detected (Checked UFW, Firewalld, Iptables)' });
+      if (permissionError) {
+          // No penalizar tan fuerte si es error de permisos, pero avisar
+          audit.score -= 5; 
+          audit.findings.push({ severity: 'low', message: 'Could not verify Firewall status due to permissions (Run agent as root or config sudo)' });
+          audit.details.firewall = 'Unknown (Permission Denied)';
+      } else {
+          audit.score -= 20;
+          audit.findings.push({ severity: 'high', message: 'No active Firewall detected (Checked UFW, Firewalld, Iptables, Nftables)' });
+          audit.details.firewall = 'Inactive';
+      }
     }
   }
 
