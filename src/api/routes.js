@@ -1,5 +1,6 @@
 const metrics = require('../metrics');
 const security = require('../security');
+const filesystem = require('../filesystem');
 const config = require('../config');
 
 /**
@@ -66,7 +67,6 @@ async function routes(fastify, options) {
     }
   });
 
-  // NUEVO: Auditoría de Seguridad (Score)
   fastify.get('/security/audit', async (request, reply) => {
     try {
       const audit = await security.runSecurityAudit();
@@ -77,7 +77,6 @@ async function routes(fastify, options) {
     }
   });
 
-  // NUEVO: Mapa de Amenazas (Geolocalización)
   fastify.get('/network/map', async (request, reply) => {
     try {
       const map = await security.getThreatMap();
@@ -145,6 +144,42 @@ async function routes(fastify, options) {
       return { status };
     } catch (e) {
       reply.code(400).send({ error: e.message });
+    }
+  });
+
+  // --- Nuevos Endpoints Filesystem ---
+
+  // Buscar archivos grandes
+  // GET /system/files/large?path=/var/log&min=50M&limit=5
+  fastify.get('/system/files/large', async (request, reply) => {
+    const dirPath = request.query.path || '/var';
+    const minSize = request.query.min || '100M';
+    const limit = parseInt(request.query.limit) || 10;
+    
+    try {
+      const files = await filesystem.findLargeFiles(dirPath, minSize, limit);
+      return { files };
+    } catch (e) {
+      reply.code(500).send({ error: e.message });
+    }
+  });
+
+  // Eliminar archivo (PELIGROSO)
+  // DELETE /system/files
+  // Body: { "path": "/var/log/old_log.gz" }
+  fastify.delete('/system/files', async (request, reply) => {
+    const { path } = request.body || {};
+    if (!path) {
+      reply.code(400).send({ error: 'Path is required in body' });
+      return;
+    }
+    
+    try {
+      const result = await filesystem.deleteFile(path);
+      return result;
+    } catch (e) {
+      request.log.warn(`File deletion failed: ${path} - ${e.message}`);
+      reply.code(403).send({ error: e.message });
     }
   });
 }
