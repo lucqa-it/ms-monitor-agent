@@ -2,6 +2,10 @@ const metrics = require('../metrics');
 const security = require('../security');
 const filesystem = require('../filesystem');
 const config = require('../config');
+const cryptoManager = require('../crypto');
+
+// Inicializar criptografía al cargar rutas
+cryptoManager.initCrypto();
 
 /**
  * Definición de rutas del API
@@ -9,13 +13,45 @@ const config = require('../config');
  */
 async function routes(fastify, options) {
   
-  // Middleware de autenticación
+  // --- Endpoint Público para Handshake (Intercambio de claves) ---
+  // El cliente llama aquí para obtener la Public Key del agente y poder enviarle credenciales cifradas
+  fastify.get('/auth/handshake', async (request, reply) => {
+    return { 
+      publicKey: cryptoManager.getPublicKey(),
+      algorithm: 'RSA-2048',
+      format: 'PKCS#8'
+    };
+  });
+
+  // --- Middleware de Autenticación Mejorado ---
   fastify.addHook('preHandler', async (request, reply) => {
-    if (request.url === '/health' || request.routerPath === '/health') return;
+    // Excepciones públicas
+    if (request.routerPath === '/health' || request.routerPath === '/auth/handshake') return;
 
     const authHeader = request.headers['x-api-key'];
-    if (!authHeader || authHeader !== config.API_KEY) {
-      reply.code(401).send({ error: 'Unauthorized', message: 'Invalid or missing API Key' });
+    const authEncrypted = request.headers['x-auth-secure']; // Nuevo header cifrado
+
+    let token = null;
+
+    // Método 1: Header Estándar (Legacy/Inseguro si no es HTTPS)
+    if (authHeader) {
+        token = authHeader;
+    } 
+    // Método 2: Header Cifrado (Seguro incluso en HTTP)
+    // El cliente cifra el API Key con la clave pública del agente
+    else if (authEncrypted) {
+        try {
+            token = cryptoManager.decrypt(authEncrypted);
+        } catch (e) {
+            reply.code(401).send({ error: 'Secure handshake failed', message: 'Invalid encrypted token' });
+            return reply;
+        }
+    }
+
+    // Validar Token
+    // Nota: Aceptamos el token generado dinámicamente O el configurado en .env (para compatibilidad)
+    if (!token || (token !== cryptoManager.getAgentSecret() && token !== config.API_KEY)) {
+      reply.code(401).send({ error: 'Unauthorized', message: 'Invalid or missing API credentials' });
       return reply;
     }
   });
@@ -147,10 +183,8 @@ async function routes(fastify, options) {
     }
   });
 
-  // --- Nuevos Endpoints Filesystem ---
+  // --- Endpoints Filesystem ---
 
-  // Buscar archivos grandes
-  // GET /system/files/large?path=/var/log&min=50M&limit=5
   fastify.get('/system/files/large', async (request, reply) => {
     const dirPath = request.query.path || '/var';
     const minSize = request.query.min || '100M';
@@ -164,9 +198,6 @@ async function routes(fastify, options) {
     }
   });
 
-  // Eliminar archivo (PELIGROSO)
-  // DELETE /system/files
-  // Body: { "path": "/var/log/old_log.gz" }
   fastify.delete('/system/files', async (request, reply) => {
     const { path } = request.body || {};
     if (!path) {

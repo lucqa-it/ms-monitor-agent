@@ -1,11 +1,50 @@
 {
 	"info": {
 		"_postman_id": "monitor-agent-collection",
-		"name": "Monitor Agent API",
-		"description": "Colección completa para interactuar con el Agente de Monitoreo Ligero (Node.js). Incluye endpoints de métricas, seguridad y administración.",
+		"name": "Monitor Agent API (Secure E2E)",
+		"description": "Colección completa para el Agente de Monitoreo.\n\n🔒 **SEGURIDAD E2E ACTIVADA**\nEsta colección incluye un Pre-request Script automático que:\n1. Obtiene la clave pública del servidor (`/auth/handshake`).\n2. Cifra tu `apiKey` localmente usando RSA.\n3. Envía el header `x-auth-secure` en cada petición.\n\nTu API Key nunca viaja en texto plano.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Handshake (Get Public Key)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.publicKey) {",
+									"    pm.environment.set(\"serverPublicKey\", jsonData.publicKey);",
+									"    console.log(\"Clave Pública Actualizada\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/handshake",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"handshake"
+							]
+						},
+						"description": "Obtiene la clave pública RSA del servidor para cifrar credenciales. El script guarda automáticamente la clave en la variable de entorno `serverPublicKey`."
+					},
+					"response": []
+				}
+			]
+		},
 		{
 			"name": "General",
 			"item": [
@@ -28,16 +67,10 @@
 					"response": []
 				},
 				{
-					"name": "System Info (Static)",
+					"name": "System Info",
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "x-api-key",
-								"value": "{{apiKey}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/system",
 							"host": [
@@ -46,8 +79,7 @@
 							"path": [
 								"system"
 							]
-						},
-						"description": "Obtiene información estática del hardware y sistema operativo."
+						}
 					},
 					"response": []
 				},
@@ -55,13 +87,7 @@
 					"name": "Real-time Metrics",
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "x-api-key",
-								"value": "{{apiKey}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/metrics",
 							"host": [
@@ -70,8 +96,7 @@
 							"path": [
 								"metrics"
 							]
-						},
-						"description": "Obtiene métricas en tiempo real: CPU, RAM, Disco, Red y Top Procesos."
+						}
 					},
 					"response": []
 				}
@@ -81,16 +106,46 @@
 			"name": "Security & Network",
 			"item": [
 				{
+					"name": "Security Audit (Score)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/security/audit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"security",
+								"audit"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Threat Map (GeoIP)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/network/map",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"network",
+								"map"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Network Connections",
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "x-api-key",
-								"value": "{{apiKey}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/network/connections",
 							"host": [
@@ -100,8 +155,7 @@
 								"network",
 								"connections"
 							]
-						},
-						"description": "Lista conexiones de red activas (ESTABLISHED) y puertos en escucha (LISTEN)."
+						}
 					},
 					"response": []
 				},
@@ -109,13 +163,7 @@
 					"name": "SSH Audit Logs",
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "x-api-key",
-								"value": "{{apiKey}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/security/ssh",
 							"host": [
@@ -125,8 +173,7 @@
 								"security",
 								"ssh"
 							]
-						},
-						"description": "Analiza logs de autenticación SSH para detectar intentos fallidos y accesos exitosos. (Solo Linux)"
+						}
 					},
 					"response": []
 				}
@@ -139,13 +186,7 @@
 					"name": "Docker Stats",
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "x-api-key",
-								"value": "{{apiKey}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/system/docker",
 							"host": [
@@ -155,8 +196,65 @@
 								"system",
 								"docker"
 							]
-						},
-						"description": "Obtiene estado de contenedores Docker e imágenes."
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Docker Inspect",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/docker/:id/inspect",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"docker",
+								":id",
+								"inspect"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "your_container_id_here"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Docker Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/docker/:id/logs?lines=50",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"docker",
+								":id",
+								"logs"
+							],
+							"query": [
+								{
+									"key": "lines",
+									"value": "50"
+								}
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "your_container_id_here"
+								}
+							]
+						}
 					},
 					"response": []
 				},
@@ -164,13 +262,7 @@
 					"name": "Check Service Status",
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "x-api-key",
-								"value": "{{apiKey}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/system/services?name=docker",
 							"host": [
@@ -183,12 +275,10 @@
 							"query": [
 								{
 									"key": "name",
-									"value": "docker",
-									"description": "Nombre del servicio a consultar (o * para todos)"
+									"value": "docker"
 								}
 							]
-						},
-						"description": "Verifica el estado de un servicio del sistema (Systemd)."
+						}
 					},
 					"response": []
 				},
@@ -196,13 +286,7 @@
 					"name": "Active Users",
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "x-api-key",
-								"value": "{{apiKey}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/system/users",
 							"host": [
@@ -212,12 +296,128 @@
 								"system",
 								"users"
 							]
-						},
-						"description": "Lista usuarios conectados actualmente al sistema."
+						}
 					},
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Filesystem",
+			"item": [
+				{
+					"name": "Find Large Files",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/files/large?path=/var/log&min=50M&limit=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"files",
+								"large"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "/var/log"
+								},
+								{
+									"key": "min",
+									"value": "50M"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete File",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"path\": \"/path/to/file/to/delete.log\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/system/files",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"files"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "x-auth-secure",
+				"value": "{{encryptedToken}}",
+				"type": "string"
+			},
+			{
+				"key": "in",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Lógica de Cifrado E2E",
+					"const publicKey = pm.environment.get(\"serverPublicKey\");",
+					"const apiKey = pm.environment.get(\"apiKey\");",
+					"",
+					"if (!publicKey) {",
+					"    console.log(\"⚠️ No Public Key found. Run '/auth/handshake' first!\");",
+					"    // Fallback opcional a clave plana si no hay pública (para debug)",
+					"    // pm.environment.set(\"encryptedToken\", apiKey);",
+					"} else {",
+					"    // Importar librería forge (Postman sandbox la incluye)",
+					"    const forge = require('node-forge');",
+					"    ",
+					"    try {",
+					"        const publicKeyObj = forge.pki.publicKeyFromPem(publicKey);",
+					"        const encrypted = publicKeyObj.encrypt(apiKey, 'RSA-OAEP', {",
+					"            md: forge.md.sha256.create(),",
+					"            mgf1: { md: forge.md.sha1.create() }",
+					"        });",
+					"        const encryptedBase64 = forge.util.encode64(encrypted);",
+					"        ",
+					"        pm.environment.set(\"encryptedToken\", encryptedBase64);",
+					"        console.log(\"🔒 Token encrypted successfully\");",
+					"    } catch (e) {",
+					"        console.error(\"Encryption failed:\", e);",
+					"    }",
+					"}"
+				]
+			}
 		}
 	],
 	"variable": [
@@ -229,6 +429,11 @@
 		{
 			"key": "apiKey",
 			"value": "secret-agent-key",
+			"type": "string"
+		},
+		{
+			"key": "serverPublicKey",
+			"value": "",
 			"type": "string"
 		}
 	]
