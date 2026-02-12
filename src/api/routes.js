@@ -25,8 +25,13 @@ async function routes(fastify, options) {
 
   // --- Middleware de Autenticación Mejorado ---
   fastify.addHook('preHandler', async (request, reply) => {
-    // Excepciones públicas
-    if (request.routerPath === '/health' || request.routerPath === '/auth/handshake') return;
+    // Excepciones públicas (Health y Handshake)
+    // Se usa request.url.startsWith para mayor robustez frente a query params o trailing slashes
+    if (request.routerPath === '/health' || 
+        request.routerPath === '/auth/handshake' || 
+        request.url.startsWith('/auth/handshake')) {
+      return;
+    }
 
     const authHeader = request.headers['x-api-key'];
     const authEncrypted = request.headers['x-auth-secure']; // Nuevo header cifrado
@@ -49,8 +54,9 @@ async function routes(fastify, options) {
     }
 
     // Validar Token
-    // Nota: Aceptamos el token generado dinámicamente O el configurado en .env (para compatibilidad)
-    if (!token || (token !== cryptoManager.getAgentSecret() && token !== config.API_KEY)) {
+    // Nota: Solo aceptamos el token seguro generado por el sistema criptográfico
+    // Se elimina el fallback a config.API_KEY para máxima seguridad
+    if (!token || token !== cryptoManager.getAgentSecret()) {
       reply.code(401).send({ error: 'Unauthorized', message: 'Invalid or missing API credentials' });
       return reply;
     }

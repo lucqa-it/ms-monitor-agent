@@ -1,77 +1,124 @@
-# Agente de Monitoreo & API (Node.js)
+# 🕵️ Monitor Agent (Secure Edition)
 
-Este agente ligero expone métricas del sistema, auditoría de seguridad SSH, mapeo de red y herramientas de SysAdmin (Docker, Servicios, Archivos) a través de una API REST de alto rendimiento (Fastify).
+Un agente de monitoreo ligero, modular y **altamente seguro** diseñado para servidores Linux de misión crítica. Expone métricas, auditoría de seguridad y herramientas de administración a través de una API REST protegida con **Cifrado E2E (RSA-2048)**.
 
-## Arquitectura
+## 🚀 Características Principales
 
-- **Core**: Node.js + `systeminformation` (Interacción con Kernel/OS).
-- **Seguridad**: 
-    - Parseo nativo de logs de autenticación.
-    - Auditoría automática (Score).
-    - Mapa de amenazas (Geolocalización IP).
-- **SysAdmin**: Monitoreo de Docker, Systemd y Gestión de Archivos.
+*   **⚡ Rendimiento**: Basado en Fastify (Node.js), consumo mínimo de recursos.
+*   **🔒 Seguridad Militar**: Autenticación con cifrado asimétrico RSA. Las credenciales nunca viajan en texto plano.
+*   **🛡️ Auditoría Automática**: Escanea el servidor y otorga una puntuación de seguridad (Score A-F) basada en Firewall, SSH y puertos.
+*   **🌍 Mapa de Amenazas**: Geolocalización en tiempo real de conexiones entrantes/salientes.
+*   **🔧 SysAdmin Tools**: Gestión remota de Docker, Systemd y Archivos sin necesidad de SSH interactivo.
 
-## Requisitos
+---
 
-- Node.js (v14 o superior).
-- **Linux**: Permisos de lectura en `/var/log/auth.log` (o root) para auditoría SSH y `ufw`.
-- **Docker**: Usuario debe pertenecer al grupo `docker`.
+## 📦 Instalación
 
-## Instalación
+### Requisitos
+*   Node.js v14+
+*   Linux (Ubuntu/Debian/CentOS/RHEL recomendados)
+*   Usuario con privilegios limitados (no root recomendado)
 
-1. Instalar dependencias:
-   ```bash
-   npm install
-   ```
-
-## Uso
-
-Iniciar el agente:
+### 1. Clonar y Preparar
 ```bash
-sudo node index.js
+git clone https://github.com/tu-repo/monitor-agent.git
+cd monitor-agent
+npm install
 ```
 
-Para producción (PM2):
+### 2. Configuración de Permisos (Importante)
+Para que el agente pueda auditar el firewall y logs sin ser `root`, agrega esto a tu `/etc/sudoers` (`sudo visudo`):
+
 ```bash
+# Reemplaza 'monitor-user' por tu usuario real
+monitor-user ALL=(ALL) NOPASSWD: /usr/sbin/iptables -L*, /usr/sbin/nft list ruleset, /usr/sbin/ufw status
+```
+
+### 3. Iniciar Agente
+```bash
+# Iniciar en modo producción
+npm start
+
+# O usando PM2 (Recomendado)
 npm install -g pm2
-sudo pm2 start index.js --name "monitor-agent"
+pm2 start index.js --name "monitor-agent"
 ```
 
-## API Endpoints
+> **Nota**: Al iniciar por primera vez, el agente generará un par de claves RSA en la carpeta `secure/` y mostrará tu **API Key Maestra** en la consola. ¡Guárdala!
 
-Puerto default: `3456`. Header Auth: `x-api-key: secret-agent-key`.
+---
 
-### 1. Métricas & Sistema
-- `GET /health` (Público): Estado del servicio.
-- `GET /metrics` (Auth): CPU, RAM, Disco, Top Procesos.
-- `GET /system` (Auth): Hardware y OS.
+## 🔐 Seguridad y Autenticación E2E
 
-### 2. Seguridad Avanzada
-- `GET /security/audit`: Puntuación de Seguridad (0-100).
-- `GET /network/map`: Mapa de Amenazas (Geolocalización).
-- `GET /security/ssh`: Auditoría de logs SSH.
-- `GET /network/connections`: Tabla de conexiones.
+Este agente no utiliza API Keys planas tradicionales. Implementa un handshake criptográfico:
 
-### 3. Herramientas SysAdmin
-#### Docker & Servicios
-- `GET /system/docker`: Lista de contenedores.
-- `GET /system/docker/:id/inspect`: Detalle JSON de contenedor.
-- `GET /system/docker/:id/logs`: Logs de contenedor.
-- `GET /system/services?name=nginx`: Estado de servicio.
-- `GET /system/services/:name/status`: Status detallado systemctl.
-- `GET /system/services/:name/logs`: Logs journalctl.
+1.  **Handshake**: El cliente solicita la Clave Pública del servidor.
+2.  **Cifrado**: El cliente cifra su API Key con dicha clave pública (RSA-OAEP).
+3.  **Envío**: El cliente envía el token cifrado en el header `x-auth-secure`.
 
-#### Sistema de Archivos (NUEVO)
-- `GET /system/files/large`: Buscar archivos pesados.
-    - Params: `path=/var/log`, `min=100M`, `limit=10`.
-- `DELETE /system/files`: Eliminar archivo.
-    - Body: `{ "path": "/path/to/file.log" }`.
-    - **Nota**: Protegido contra eliminación de archivos críticos del sistema.
+### Flujo de Ejemplo (Cliente)
 
-#### Usuarios
-- `GET /system/users`: Usuarios conectados.
+```http
+GET /auth/handshake
+< 200 OK { "publicKey": "-----BEGIN PUBLIC KEY..." }
 
-## Configuración
-Variables de entorno en `.env`:
-- `PORT`: Puerto (3456).
-- `API_KEY`: Clave de seguridad.
+// Cifrar API_KEY localmente...
+
+GET /system
+x-auth-secure: <TOKEN_CIFRADO_BASE64>
+< 200 OK { ... }
+```
+
+---
+
+## 📡 API Endpoints
+
+### 🟢 Estado y Métricas
+| Método | Endpoint | Descripción |
+| :--- | :--- | :--- |
+| `GET` | `/health` | Check de vida (Público). |
+| `GET` | `/system` | Info de Hardware y OS. |
+| `GET` | `/metrics` | CPU, RAM, Disco, Red en tiempo real. |
+
+### 🛡️ Seguridad
+| Método | Endpoint | Descripción |
+| :--- | :--- | :--- |
+| `GET` | `/security/audit` | **Score de Seguridad (0-100)** y hallazgos de vulnerabilidades. |
+| `GET` | `/network/map` | Mapa de amenazas con geolocalización de IPs. |
+| `GET` | `/network/connections` | Tabla de conexiones TCP/UDP activas. |
+| `GET` | `/security/ssh` | Intentos de intrusión (Brute force) en logs SSH. |
+
+### 🛠 Herramientas SysAdmin
+| Método | Endpoint | Descripción |
+| :--- | :--- | :--- |
+| `GET` | `/system/docker` | Listado de contenedores. |
+| `GET` | `/system/docker/:id/logs` | Ver logs de un contenedor. |
+| `GET` | `/system/services` | Estado de servicios Systemd. |
+| `GET` | `/system/files/large` | Buscar archivos pesados (`?path=/var&min=100M`). |
+| `DELETE` | `/system/files` | Eliminar archivo (Protegido contra rutas críticas). |
+
+---
+
+## 🧪 Testing con Postman
+
+Se incluye una colección lista para usar (`monitor-agent.postman_collection.json`) con scripts automáticos de cifrado.
+
+1.  Importa la colección en Postman.
+2.  Configura la variable `baseUrl` (ej: `http://tu-servidor:3456`) y `apiKey`.
+3.  Ejecuta la petición **"Handshake"** una vez.
+4.  ¡Listo! El resto de peticiones se firmarán automáticamente.
+
+---
+
+## ⚠️ Variables de Entorno (.env)
+
+| Variable | Default | Descripción |
+| :--- | :--- | :--- |
+| `PORT` | `3456` | Puerto de escucha. |
+| `HOST` | `0.0.0.0` | Interfaz de red. |
+| `LOG_LEVEL` | `info` | Nivel de detalle de logs. |
+
+---
+
+## 📄 Licencia
+MIT License.

@@ -1,5973 +1,847 @@
-DOCUMENTACIÓN DE API - MONITOR AGENT (Actualizado)
-Host: http://localhost:3456
-API Key: secret-agent-key
-Generado: 2026-02-11T23:13:50.158Z
+kdon@lim-lucqa-001:/opt/ms/monitor/ms-monitor-agent$ pm2 restart 0
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [0](ids: [ '0' ])
+[PM2] [monitor-agent](0) ✓
+┌────┬──────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name             │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼──────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ monitor-agent    │ default     │ 1.0.0   │ fork    │ 2361910  │ 0s     │ 18   │ online    │ 0%       │ 16.9mb   │ kdon     │ disabled │
+└────┴──────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+kdon@lim-lucqa-001:/opt/ms/monitor/ms-monitor-agent$ sudo ufw status
+# Debería decir: Status: active
+Status: active
 
-================================================================================
+To                         Action      From
+--                         ------      ----
+21113/udp                  ALLOW       Anywhere                  
+21115/tcp                  ALLOW       Anywhere                  
+21116/tcp                  ALLOW       Anywhere                  
+9091/tcp                   ALLOW       Anywhere                  
+9090/tcp                   ALLOW       Anywhere                  
+1194/tcp                   ALLOW       Anywhere                  
+OpenSSH                    ALLOW       Anywhere                  
+51820/udp                  ALLOW       Anywhere                  
+8081/tcp                   ALLOW       Anywhere                  
+80/tcp                     ALLOW       Anywhere                  
+7844/udp                   ALLOW       Anywhere                  
+443/udp                    ALLOW       Anywhere                  
+443/tcp                    ALLOW       Anywhere                  
+3456/tcp                   ALLOW       Anywhere                  
+21113/udp (v6)             ALLOW       Anywhere (v6)             
+21115/tcp (v6)             ALLOW       Anywhere (v6)             
+21116/tcp (v6)             ALLOW       Anywhere (v6)             
+9091/tcp (v6)              ALLOW       Anywhere (v6)             
+9090/tcp (v6)              ALLOW       Anywhere (v6)             
+1194/tcp (v6)              ALLOW       Anywhere (v6)             
+OpenSSH (v6)               ALLOW       Anywhere (v6)             
+51820/udp (v6)             ALLOW       Anywhere (v6)             
+8081/tcp (v6)              ALLOW       Anywhere (v6)             
+80/tcp (v6)                ALLOW       Anywhere (v6)             
+7844/udp (v6)              ALLOW       Anywhere (v6)             
+443/udp (v6)               ALLOW       Anywhere (v6)             
+443/tcp (v6)               ALLOW       Anywhere (v6)             
+3456/tcp (v6)              ALLOW       Anywhere (v6)             
 
-### Health Check
-Method: GET
-URL: http://localhost:3456/health
-Headers: (Ninguno)
+kdon@lim-lucqa-001:/opt/ms/monitor/ms-monitor-agent$ sudo systemctl status firewalld
+# Debería decir: Active: active (running)
+Unit firewalld.service could not be found.
+kdon@lim-lucqa-001:/opt/ms/monitor/ms-monitor-agent$ sudo iptables -L -n -v
+# Si ves muchas líneas de reglas (ACCEPT/DROP), está activo.
+# Si ves todo vacío (Policy ACCEPT), está inactivo.
+Chain INPUT (policy DROP 297 packets, 8316 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+ 9121 3972K ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:3456
+    0     0 ACCEPT     all  --  docker0 *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ACCEPT     tcp  --  *      *       172.16.0.0/12        0.0.0.0/0            tcp dpt:53
+ 8605  581K ACCEPT     udp  --  *      *       172.16.0.0/12        0.0.0.0/0            udp dpt:53
+  12M   12G ufw-before-logging-input  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+  12M   12G ufw-before-input  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+83144   13M ufw-after-input  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+12847  389K ufw-after-logging-input  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+12847  389K ufw-reject-input  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+12847  389K ufw-track-input  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
 
-Status: 200
-Body:
-{
-  "status": "ok",
-  "uptime": 195.2740876
+Chain FORWARD (policy DROP 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+ 509K  349M DOCKER-USER  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+ 509K  349M DOCKER-FORWARD  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ufw-before-logging-forward  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ufw-before-forward  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ufw-after-forward  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ufw-after-logging-forward  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ufw-reject-forward  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ufw-track-forward  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain OUTPUT (policy ACCEPT 1 packets, 52 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+9802K 8591M ufw-before-logging-output  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+9802K 8591M ufw-before-output  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+37617 3363K ufw-after-output  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+37617 3363K ufw-after-logging-output  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+37617 3363K ufw-reject-output  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+37617 3363K ufw-track-output  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER (4 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 ACCEPT     tcp  --  !br-294beb14502a br-294beb14502a  0.0.0.0/0            172.20.0.15          tcp dpt:8080
+    0     0 ACCEPT     tcp  --  !br-294beb14502a br-294beb14502a  0.0.0.0/0            172.20.0.15          tcp dpt:5432
+    0     0 ACCEPT     tcp  --  !br-294beb14502a br-294beb14502a  0.0.0.0/0            172.20.0.15          tcp dpt:443
+ 4219  219K ACCEPT     tcp  --  !br-294beb14502a br-294beb14502a  0.0.0.0/0            172.20.0.15          tcp dpt:80
+    0     0 ACCEPT     tcp  --  !br-294beb14502a br-294beb14502a  0.0.0.0/0            172.20.0.13          tcp dpt:8200
+  938 48776 ACCEPT     tcp  --  !br-294beb14502a br-294beb14502a  0.0.0.0/0            172.20.0.11          tcp dpt:5432
+    0     0 DROP       all  --  !br-8b0b64adc4b3 br-8b0b64adc4b3  0.0.0.0/0            0.0.0.0/0           
+    0     0 DROP       all  --  !br-0c88756fd812 br-0c88756fd812  0.0.0.0/0            0.0.0.0/0           
+    0     0 DROP       all  --  !br-294beb14502a br-294beb14502a  0.0.0.0/0            0.0.0.0/0           
+    0     0 DROP       all  --  !docker0 docker0  0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER-BRIDGE (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 DOCKER     all  --  *      br-8b0b64adc4b3  0.0.0.0/0            0.0.0.0/0           
+    0     0 DOCKER     all  --  *      br-0c88756fd812  0.0.0.0/0            0.0.0.0/0           
+ 8311  432K DOCKER     all  --  *      br-294beb14502a  0.0.0.0/0            0.0.0.0/0           
+    0     0 DOCKER     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER-CT (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 ACCEPT     all  --  *      br-8b0b64adc4b3  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    0     0 ACCEPT     all  --  *      br-0c88756fd812  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+ 255K  164M ACCEPT     all  --  *      br-294beb14502a  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    0     0 ACCEPT     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+
+Chain DOCKER-FORWARD (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+ 509K  349M DOCKER-CT  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+ 254K  185M DOCKER-INTERNAL  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+ 254K  185M DOCKER-BRIDGE  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ACCEPT     all  --  br-8b0b64adc4b3 *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ACCEPT     all  --  br-0c88756fd812 *       0.0.0.0/0            0.0.0.0/0           
+ 245K  185M ACCEPT     all  --  br-294beb14502a *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ACCEPT     all  --  docker0 *       0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER-INTERNAL (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain DOCKER-USER (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-after-forward (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-after-input (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+  422 34248 ufw-skip-to-policy-input  udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:137
+    0     0 ufw-skip-to-policy-input  udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:138
+    0     0 ufw-skip-to-policy-input  tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:139
+    0     0 ufw-skip-to-policy-input  tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:445
+   17  5742 ufw-skip-to-policy-input  udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:67
+    0     0 ufw-skip-to-policy-input  udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:68
+  642  115K ufw-skip-to-policy-input  all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type BROADCAST
+
+Chain ufw-after-logging-forward (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 LOG        all  --  *      *       0.0.0.0/0            0.0.0.0/0            limit: avg 3/min burst 10 LOG flags 0 level 4 prefix "[UFW BLOCK] "
+
+Chain ufw-after-logging-input (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+  297  8316 LOG        all  --  *      *       0.0.0.0/0            0.0.0.0/0            limit: avg 3/min burst 10 LOG flags 0 level 4 prefix "[UFW BLOCK] "
+
+Chain ufw-after-logging-output (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-after-output (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-before-forward (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 ACCEPT     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    0     0 ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0            icmptype 3
+    0     0 ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0            icmptype 11
+    0     0 ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0            icmptype 12
+    0     0 ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0            icmptype 8
+    0     0 ufw-user-forward  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain ufw-before-input (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+55560   71M ACCEPT     all  --  lo     *       0.0.0.0/0            0.0.0.0/0           
+42214   21M ACCEPT     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    0     0 ufw-logging-deny  all  --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate INVALID
+    0     0 DROP       all  --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate INVALID
+    0     0 ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0            icmptype 3
+    0     0 ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0            icmptype 11
+    0     0 ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0            icmptype 12
+    0     0 ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0            icmptype 8
+    0     0 ACCEPT     udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp spt:67 dpt:68
+ 1387  164K ufw-not-local  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ACCEPT     udp  --  *      *       0.0.0.0/0            224.0.0.251          udp dpt:5353
+    0     0 ACCEPT     udp  --  *      *       0.0.0.0/0            239.255.255.250      udp dpt:1900
+ 1387  164K ufw-user-input  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain ufw-before-logging-forward (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-before-logging-input (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-before-logging-output (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-before-output (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+55560   71M ACCEPT     all  --  *      lo      0.0.0.0/0            0.0.0.0/0           
+34645   15M ACCEPT     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+  570 45112 ufw-user-output  all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain ufw-logging-allow (0 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 LOG        all  --  *      *       0.0.0.0/0            0.0.0.0/0            limit: avg 3/min burst 10 LOG flags 0 level 4 prefix "[UFW ALLOW] "
+
+Chain ufw-logging-deny (2 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate INVALID limit: avg 3/min burst 10
+    0     0 LOG        all  --  *      *       0.0.0.0/0            0.0.0.0/0            limit: avg 3/min burst 10 LOG flags 0 level 4 prefix "[UFW BLOCK] "
+
+Chain ufw-not-local (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    9   516 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+  297  8316 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type MULTICAST
+ 1081  155K RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type BROADCAST
+    0     0 ufw-logging-deny  all  --  *      *       0.0.0.0/0            0.0.0.0/0            limit: avg 3/min burst 10
+    0     0 DROP       all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain ufw-reject-forward (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-reject-input (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-reject-output (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-skip-to-policy-forward (0 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 DROP       all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain ufw-skip-to-policy-input (7 references)
+ pkts bytes target     prot opt in     out     source               destination         
+ 1081  155K DROP       all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain ufw-skip-to-policy-output (0 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 ACCEPT     all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain ufw-track-forward (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-track-input (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-track-output (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+   99  5940 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate NEW
+  470 39120 ACCEPT     udp  --  *      *       0.0.0.0/0            0.0.0.0/0            ctstate NEW
+
+Chain ufw-user-forward (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-user-input (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 ACCEPT     udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:21113
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:21115
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:21116
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:9091
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:9090
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:1194
+    9   516 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:22 /* 'dapp_OpenSSH' */
+    0     0 ACCEPT     udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:51820
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8081
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+    0     0 ACCEPT     udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:7844
+    0     0 ACCEPT     udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:443
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:443
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:3456
+
+Chain ufw-user-limit (0 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 LOG        all  --  *      *       0.0.0.0/0            0.0.0.0/0            limit: avg 3/min burst 5 LOG flags 0 level 4 prefix "[UFW LIMIT BLOCK] "
+    0     0 REJECT     all  --  *      *       0.0.0.0/0            0.0.0.0/0            reject-with icmp-port-unreachable
+
+Chain ufw-user-limit-accept (0 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 ACCEPT     all  --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+Chain ufw-user-logging-forward (0 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-user-logging-input (0 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-user-logging-output (0 references)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain ufw-user-output (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+kdon@lim-lucqa-001:/opt/ms/monitor/ms-monitor-agent$ sudo nft list ruleset
+# Si devuelve reglas, está activo.
+table ip raw {
+        chain PREROUTING {
+                type filter hook prerouting priority raw; policy accept;
+                iifname != "br-294beb14502a" ip daddr 172.20.0.2 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.3 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.4 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.6 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.7 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.8 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.9 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.11 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.12 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.13 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.14 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.16 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.10 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.5 counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" ip daddr 172.20.0.15 counter packets 0 bytes 0 drop
+        }
+
+        chain OUTPUT {
+                type filter hook output priority raw; policy accept;
+        }
 }
-
---------------------------------------------------------------------------------
-
-### System Info
-Method: GET
-URL: http://localhost:3456/system
-Headers: { "x-api-key": "secret-agent-key" }
-
-Status: 200
-Body:
-{
-  "data": {
-    "os": {
-      "platform": "Windows",
-      "distro": "Microsoft Windows 11 Pro",
-      "release": "10.0.26200",
-      "hostname": "KDON"
-    },
-    "hardware": {
-      "manufacturer": "ASUS",
-      "model": "System Product Name",
-      "cpu": "Intel Core™ Ultra 9 285K",
-      "cores": 24
-    },
-    "network": {
-      "interfaces": [
-        {
-          "iface": "vEthernet (Default Switch)",
-          "ip4": "172.19.224.1",
-          "mac": "00:15:5d:ac:4f:06",
-          "type": "",
-          "operstate": "down"
-        },
-        {
-          "iface": "vEthernet (WSL (Hyper-V firewall))",
-          "ip4": "172.31.64.1",
-          "mac": "00:15:5d:4b:cd:34",
-          "type": "",
-          "operstate": "down"
-        },
-        {
-          "iface": "Ethernet",
-          "ip4": "192.168.10.12",
-          "mac": "60:cf:84:65:c8:0c",
-          "type": "wired",
-          "operstate": "up"
-        },
-        {
-          "iface": "Loopback Pseudo-Interface 1",
-          "ip4": "127.0.0.1",
-          "mac": "00:00:00:00:00:00",
-          "type": "",
-          "operstate": "down"
-        },
-        {
-          "iface": "Conexión de red Bluetooth",
-          "ip4": "",
-          "mac": "10:5f:ad:c3:5d:2e",
-          "type": "wired",
-          "operstate": "down"
+table ip filter {
+        chain INPUT {
+                type filter hook input priority filter; policy drop;
+                meta l4proto tcp tcp dport 3456 counter packets 9129 bytes 3975793 accept
+                iifname "docker0" counter packets 0 bytes 0 accept
+                meta l4proto tcp ip saddr 172.16.0.0/12 tcp dport 53 counter packets 0 bytes 0 accept
+                meta l4proto udp ip saddr 172.16.0.0/12 udp dport 53 counter packets 8605 bytes 581125 accept
+                counter packets 11632146 bytes 12144430608 jump ufw-before-logging-input
+                counter packets 11632146 bytes 12144430608 jump ufw-before-input
+                counter packets 83145 bytes 12718663 jump ufw-after-input
+                counter packets 12848 bytes 388959 jump ufw-after-logging-input
+                counter packets 12848 bytes 388959 jump ufw-reject-input
+                counter packets 12848 bytes 388959 jump ufw-track-input
         }
-      ]
-    }
-  }
+
+        chain FORWARD {
+                type filter hook forward priority filter; policy drop;
+                counter packets 508723 bytes 349342602 jump DOCKER-USER
+                counter packets 508723 bytes 349342602 jump DOCKER-FORWARD
+                counter packets 0 bytes 0 jump ufw-before-logging-forward
+                counter packets 0 bytes 0 jump ufw-before-forward
+                counter packets 0 bytes 0 jump ufw-after-forward
+                counter packets 0 bytes 0 jump ufw-after-logging-forward
+                counter packets 0 bytes 0 jump ufw-reject-forward
+                counter packets 0 bytes 0 jump ufw-track-forward
+        }
+
+        chain OUTPUT {
+                type filter hook output priority filter; policy accept;
+                counter packets 9802500 bytes 8590790911 jump ufw-before-logging-output
+                counter packets 9802500 bytes 8590790911 jump ufw-before-output
+                counter packets 37617 bytes 3362548 jump ufw-after-output
+                counter packets 37617 bytes 3362548 jump ufw-after-logging-output
+                counter packets 37617 bytes 3362548 jump ufw-reject-output
+                counter packets 37617 bytes 3362548 jump ufw-track-output
+        }
+
+        chain DOCKER-FORWARD {
+                counter packets 508723 bytes 349342602 jump DOCKER-CT
+                counter packets 253780 bytes 185160299 jump DOCKER-INTERNAL
+                counter packets 253780 bytes 185160299 jump DOCKER-BRIDGE
+                iifname "br-8b0b64adc4b3" counter packets 0 bytes 0 accept
+                iifname "br-0c88756fd812" counter packets 0 bytes 0 accept
+                iifname "br-294beb14502a" counter packets 245465 bytes 184727919 accept
+                iifname "docker0" counter packets 0 bytes 0 accept
+        }
+
+        chain DOCKER-USER {
+        }
+
+        chain ufw-after-forward {
+        }
+
+        chain ufw-after-input {
+                meta l4proto udp udp dport 137 counter packets 422 bytes 34248 jump ufw-skip-to-policy-input
+                meta l4proto udp udp dport 138 counter packets 0 bytes 0 jump ufw-skip-to-policy-input
+                meta l4proto tcp tcp dport 139 counter packets 0 bytes 0 jump ufw-skip-to-policy-input
+                meta l4proto tcp tcp dport 445 counter packets 0 bytes 0 jump ufw-skip-to-policy-input
+                meta l4proto udp udp dport 67 counter packets 17 bytes 5742 jump ufw-skip-to-policy-input
+                meta l4proto udp udp dport 68 counter packets 0 bytes 0 jump ufw-skip-to-policy-input
+                fib daddr type broadcast counter packets 642 bytes 115240 jump ufw-skip-to-policy-input
+        }
+
+        chain ufw-after-logging-forward {
+                limit rate 3/minute burst 10 packets counter packets 0 bytes 0 log prefix "[UFW BLOCK] "
+        }
+
+        chain ufw-after-logging-input {
+                limit rate 3/minute burst 10 packets counter packets 298 bytes 8344 log prefix "[UFW BLOCK] "
+        }
+
+        chain ufw-after-logging-output {
+        }
+
+        chain ufw-after-output {
+        }
+
+        chain ufw-before-forward {
+                ct state related,established counter packets 0 bytes 0 accept
+                meta l4proto icmp icmp type destination-unreachable counter packets 0 bytes 0 accept
+                meta l4proto icmp icmp type time-exceeded counter packets 0 bytes 0 accept
+                meta l4proto icmp icmp type parameter-problem counter packets 0 bytes 0 accept
+                meta l4proto icmp icmp type echo-request counter packets 0 bytes 0 accept
+                counter packets 0 bytes 0 jump ufw-user-forward
+        }
+
+        chain ufw-before-input {
+                iifname "lo" counter packets 55601 bytes 70698159 accept
+                ct state related,established counter packets 42273 bytes 21485378 accept
+                ct state invalid counter packets 0 bytes 0 jump ufw-logging-deny
+                ct state invalid counter packets 0 bytes 0 drop
+                meta l4proto icmp icmp type destination-unreachable counter packets 0 bytes 0 accept
+                meta l4proto icmp icmp type time-exceeded counter packets 0 bytes 0 accept
+                meta l4proto icmp icmp type parameter-problem counter packets 0 bytes 0 accept
+                meta l4proto icmp icmp type echo-request counter packets 0 bytes 0 accept
+                meta l4proto udp udp sport 67 udp dport 68 counter packets 0 bytes 0 accept
+                counter packets 1388 bytes 164090 jump ufw-not-local
+                meta l4proto udp ip daddr 224.0.0.251 udp dport 5353 counter packets 0 bytes 0 accept
+                meta l4proto udp ip daddr 239.255.255.250 udp dport 1900 counter packets 0 bytes 0 accept
+                counter packets 1388 bytes 164090 jump ufw-user-input
+        }
+
+        chain ufw-before-logging-forward {
+        }
+
+        chain ufw-before-logging-input {
+        }
+
+        chain ufw-before-logging-output {
+        }
+
+        chain ufw-before-output {
+                oifname "lo" counter packets 55601 bytes 70698159 accept
+                ct state related,established counter packets 34729 bytes 14747367 accept
+                counter packets 570 bytes 45112 jump ufw-user-output
+        }
+
+        chain ufw-reject-forward {
+        }
+
+        chain ufw-reject-input {
+        }
+
+        chain ufw-reject-output {
+        }
+
+        chain ufw-track-forward {
+        }
+
+        chain ufw-track-input {
+        }
+
+        chain ufw-track-output {
+                meta l4proto tcp ct state new counter packets 99 bytes 5940 accept
+                meta l4proto udp ct state new counter packets 470 bytes 39120 accept
+        }
+
+        chain DOCKER {
+                iifname != "br-294beb14502a" oifname "br-294beb14502a" meta l4proto tcp ip daddr 172.20.0.15 tcp dport 8080 counter packets 0 bytes 0 accept
+                iifname != "br-294beb14502a" oifname "br-294beb14502a" meta l4proto tcp ip daddr 172.20.0.15 tcp dport 5432 counter packets 0 bytes 0 accept
+                iifname != "br-294beb14502a" oifname "br-294beb14502a" meta l4proto tcp ip daddr 172.20.0.15 tcp dport 443 counter packets 0 bytes 0 accept
+                iifname != "br-294beb14502a" oifname "br-294beb14502a" meta l4proto tcp ip daddr 172.20.0.15 tcp dport 80 counter packets 4223 bytes 219596 accept
+                iifname != "br-294beb14502a" oifname "br-294beb14502a" meta l4proto tcp ip daddr 172.20.0.13 tcp dport 8200 counter packets 0 bytes 0 accept
+                iifname != "br-294beb14502a" oifname "br-294beb14502a" meta l4proto tcp ip daddr 172.20.0.11 tcp dport 5432 counter packets 938 bytes 48776 accept
+                iifname != "br-8b0b64adc4b3" oifname "br-8b0b64adc4b3" counter packets 0 bytes 0 drop
+                iifname != "br-0c88756fd812" oifname "br-0c88756fd812" counter packets 0 bytes 0 drop
+                iifname != "br-294beb14502a" oifname "br-294beb14502a" counter packets 0 bytes 0 drop
+                iifname != "docker0" oifname "docker0" counter packets 0 bytes 0 drop
+        }
+
+        chain DOCKER-BRIDGE {
+                oifname "br-8b0b64adc4b3" counter packets 0 bytes 0 jump DOCKER
+                oifname "br-0c88756fd812" counter packets 0 bytes 0 jump DOCKER
+                oifname "br-294beb14502a" counter packets 8315 bytes 432380 jump DOCKER
+                oifname "docker0" counter packets 0 bytes 0 jump DOCKER
+        }
+
+        chain DOCKER-CT {
+                oifname "br-8b0b64adc4b3" ct state related,established counter packets 0 bytes 0 accept
+                oifname "br-0c88756fd812" ct state related,established counter packets 0 bytes 0 accept
+                oifname "br-294beb14502a" ct state related,established counter packets 254943 bytes 164182303 accept
+                oifname "docker0" ct state related,established counter packets 0 bytes 0 accept
+        }
+
+        chain DOCKER-INTERNAL {
+        }
+
+        chain ufw-logging-deny {
+                ct state invalid limit rate 3/minute burst 10 packets counter packets 0 bytes 0 return
+                limit rate 3/minute burst 10 packets counter packets 0 bytes 0 log prefix "[UFW BLOCK] "
+        }
+
+        chain ufw-logging-allow {
+                limit rate 3/minute burst 10 packets counter packets 0 bytes 0 log prefix "[UFW ALLOW] "
+        }
+
+        chain ufw-skip-to-policy-input {
+                counter packets 1081 bytes 155230 drop
+        }
+
+        chain ufw-skip-to-policy-output {
+                counter packets 0 bytes 0 accept
+        }
+
+        chain ufw-skip-to-policy-forward {
+                counter packets 0 bytes 0 drop
+        }
+
+        chain ufw-not-local {
+                fib daddr type local counter packets 9 bytes 516 return
+                fib daddr type multicast counter packets 298 bytes 8344 return
+                fib daddr type broadcast counter packets 1081 bytes 155230 return
+                limit rate 3/minute burst 10 packets counter packets 0 bytes 0 jump ufw-logging-deny
+                counter packets 0 bytes 0 drop
+        }
+
+        chain ufw-user-input {
+                meta l4proto udp udp dport 21113 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 21115 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 21116 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 9091 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 9090 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 1194 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 22  counter packets 9 bytes 516 accept
+                meta l4proto udp udp dport 51820 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 8081 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 80 counter packets 0 bytes 0 accept
+                meta l4proto udp udp dport 7844 counter packets 0 bytes 0 accept
+                meta l4proto udp udp dport 443 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 443 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 3456 counter packets 0 bytes 0 accept
+        }
+
+        chain ufw-user-output {
+        }
+
+        chain ufw-user-forward {
+        }
+
+        chain ufw-user-logging-input {
+        }
+
+        chain ufw-user-logging-output {
+        }
+
+        chain ufw-user-logging-forward {
+        }
+
+        chain ufw-user-limit {
+                limit rate 3/minute counter packets 0 bytes 0 log prefix "[UFW LIMIT BLOCK] "
+                counter packets 0 bytes 0 reject
+        }
+
+        chain ufw-user-limit-accept {
+                counter packets 0 bytes 0 accept
+        }
 }
-
---------------------------------------------------------------------------------
-
-### Real-time Metrics
-Method: GET
-URL: http://localhost:3456/metrics
-Headers: { "x-api-key": "secret-agent-key" }
-
-Status: 200
-Body:
-{
-  "data": {
-    "timestamp": "2026-02-11T23:13:58.214Z",
-    "metrics": {
-      "currentLoad": {
-        "currentLoad": 7.975525277578519,
-        "currentLoadUser": 2.6841717432285197,
-        "currentLoadSystem": 5.036710771599936
-      },
-      "mem": {
-        "total": 67940212736,
-        "free": 32722399232,
-        "used": 35217813504,
-        "active": 35217813504,
-        "available": 32722399232
-      },
-      "fsSize": [
-        {
-          "fs": "C:",
-          "type": "NTFS",
-          "size": 499205009408,
-          "used": 362007986176,
-          "available": 137197023232,
-          "mount": "C:"
-        },
-        {
-          "fs": "D:",
-          "type": "NTFS",
-          "size": 240055742464,
-          "used": 139896991744,
-          "available": 100158750720,
-          "mount": "D:"
-        },
-        {
-          "fs": "E:",
-          "type": "NTFS",
-          "size": 1000202039296,
-          "used": 135657754624,
-          "available": 864544284672,
-          "mount": "E:"
+table ip nat {
+        chain PREROUTING {
+                type nat hook prerouting priority dstnat; policy accept;
+                fib daddr type local counter packets 17599 bytes 1053485 jump DOCKER
         }
-      ],
-      "networkStats": [
-        {
-          "iface": "Ethernet",
-          "rx_bytes": 61362634468,
-          "tx_bytes": 7595354747,
-          "rx_sec": null,
-          "tx_sec": null
+
+        chain INPUT {
+                type nat hook input priority 100; policy accept;
         }
-      ],
-      "processes": {
-        "all": 555,
-        "running": 0,
-        "blocked": 0,
-        "sleeping": 0,
-        "top10": [
-          {
-            "pid": 0,
-            "name": "System Idle Process",
-            "cpu": "94.69",
-            "mem": "0.00",
-            "user": ""
-          },
-          {
-            "pid": 6024,
-            "name": "Code.exe",
-            "cpu": "0.63",
-            "mem": "0.24",
-            "user": ""
-          },
-          {
-            "pid": 79892,
-            "name": "Code.exe",
-            "cpu": "0.63",
-            "mem": "0.26",
-            "user": ""
-          },
-          {
-            "pid": 5628,
-            "name": "AsusFanControlService.exe",
-            "cpu": "0.56",
-            "mem": "0.04",
-            "user": ""
-          },
-          {
-            "pid": 16304,
-            "name": "com.docker.backend.exe",
-            "cpu": "0.53",
-            "mem": "0.44",
-            "user": ""
-          },
-          {
-            "pid": 10444,
-            "name": "WmiPrvSE.exe",
-            "cpu": "0.49",
-            "mem": "0.10",
-            "user": ""
-          },
-          {
-            "pid": 4,
-            "name": "System",
-            "cpu": "0.21",
-            "mem": "0.02",
-            "user": ""
-          },
-          {
-            "pid": 32392,
-            "name": "CefSharp.BrowserSubprocess.exe",
-            "cpu": "0.19",
-            "mem": "0.17",
-            "user": ""
-          },
-          {
-            "pid": 42596,
-            "name": "RustDesk.exe",
-            "cpu": "0.19",
-            "mem": "0.28",
-            "user": ""
-          },
-          {
-            "pid": 11500,
-            "name": "chrome.exe",
-            "cpu": "0.18",
-            "mem": "0.34",
-            "user": ""
-          }
-        ]
-      }
-    }
-  }
+
+        chain OUTPUT {
+                type nat hook output priority -100; policy accept;
+                ip daddr != 127.0.0.0/8 fib daddr type local counter packets 2259 bytes 135540 jump DOCKER
+        }
+
+        chain POSTROUTING {
+                type nat hook postrouting priority srcnat; policy accept;
+                oifname != "docker0" ip saddr 172.17.0.0/16 counter packets 0 bytes 0 masquerade 
+                oifname != "br-8b0b64adc4b3" ip saddr 172.19.0.0/16 counter packets 0 bytes 0 masquerade 
+                oifname != "br-294beb14502a" ip saddr 172.20.0.0/16 counter packets 4185 bytes 251092 masquerade 
+                oifname != "br-0c88756fd812" ip saddr 172.18.0.0/16 counter packets 0 bytes 0 masquerade 
+        }
+
+        chain DOCKER {
+                iifname != "br-294beb14502a" meta l4proto tcp tcp dport 5433 counter packets 2128 bytes 120176 dnat to 172.20.0.11:5432
+                iifname != "br-294beb14502a" meta l4proto tcp tcp dport 8200 counter packets 0 bytes 0 dnat to 172.20.0.13:8200
+                iifname != "br-294beb14502a" meta l4proto tcp tcp dport 80 counter packets 4223 bytes 219596 dnat to 172.20.0.15:80
+                iifname != "br-294beb14502a" meta l4proto tcp tcp dport 443 counter packets 0 bytes 0 dnat to 172.20.0.15:443
+                iifname != "br-294beb14502a" meta l4proto tcp tcp dport 5432 counter packets 0 bytes 0 dnat to 172.20.0.15:5432
+                iifname != "br-294beb14502a" meta l4proto tcp tcp dport 8080 counter packets 0 bytes 0 dnat to 172.20.0.15:8080
+        }
 }
+table ip6 filter {
+        chain INPUT {
+                type filter hook input priority filter; policy drop;
+                counter packets 3941159 bytes 230584263 jump ufw6-before-logging-input
+                counter packets 3941159 bytes 230584263 jump ufw6-before-input
+                counter packets 2 bytes 117 jump ufw6-after-input
+                counter packets 2 bytes 117 jump ufw6-after-logging-input
+                counter packets 2 bytes 117 jump ufw6-reject-input
+                counter packets 2 bytes 117 jump ufw6-track-input
+        }
 
---------------------------------------------------------------------------------
+        chain FORWARD {
+                type filter hook forward priority filter; policy drop;
+                counter packets 0 bytes 0 jump DOCKER-USER
+                counter packets 0 bytes 0 jump DOCKER-FORWARD
+                counter packets 0 bytes 0 jump ufw6-before-logging-forward
+                counter packets 0 bytes 0 jump ufw6-before-forward
+                counter packets 0 bytes 0 jump ufw6-after-forward
+                counter packets 0 bytes 0 jump ufw6-after-logging-forward
+                counter packets 0 bytes 0 jump ufw6-reject-forward
+                counter packets 0 bytes 0 jump ufw6-track-forward
+        }
 
-### Network Connections
-Method: GET
-URL: http://localhost:3456/network/connections
-Headers: { "x-api-key": "secret-agent-key" }
+        chain OUTPUT {
+                type filter hook output priority filter; policy accept;
+                counter packets 3950097 bytes 231067181 jump ufw6-before-logging-output
+                counter packets 3950097 bytes 231067181 jump ufw6-before-output
+                counter packets 447 bytes 35519 jump ufw6-after-output
+                counter packets 447 bytes 35519 jump ufw6-after-logging-output
+                counter packets 447 bytes 35519 jump ufw6-reject-output
+                counter packets 447 bytes 35519 jump ufw6-track-output
+        }
 
-Status: 200
-Body:
-{
-  "summary": {
-    "total": 426,
-    "listening": 105,
-    "established": 146
-  },
-  "connections": [
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "22",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "135",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "445",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "1236",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "2179",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "3000",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "3085",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "3389",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "3456",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5040",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5432",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5985",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "6379",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "6850",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "7070",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "7680",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "15611",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "27017",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "47001",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "49340",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "49664",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "49665",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "49666",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "49667",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "49669",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "49679",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "50080",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "50304",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "50443",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "52627",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "53425",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "59869",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "60730",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "0.0.0.0",
-      "localPort": "62273",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "1042",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "1042",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "49398",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "1042",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "58808",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "1042",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "60663",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "1043",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "3456",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "53914",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "5186",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "5354",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "5939",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "6188",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "6188",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "56715",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "6188",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "56716",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "6189",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "6189",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "56717",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "6189",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "56718",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "6189",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "56719",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "6850",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "58807",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "9010",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "9012",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "9012",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "57135",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "9013",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "9013",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "58809",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "9180",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "13030",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "13030",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "49901",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "13031",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "13032",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "17788",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "20241",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "22112",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "27339",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "43834",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "44874",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "45654",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "47647",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "49398",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "1042",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "49901",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "13030",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "49939",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "49959",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "50100",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "50100",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "50309",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "50309",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "50100",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "51000",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "51000",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "54958",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "51100",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "53000",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "53005",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "53914",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "3456",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "54399",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "28194",
-      "state": "SYN_SENT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "54958",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "51000",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "54972",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "55097",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "55097",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "55098",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "55098",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "55097",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "56706",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "56707",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "56707",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "56706",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "56708",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "56709",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "56709",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "56708",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "56715",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "6188",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "56716",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "6188",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "56717",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "6189",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "56718",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "6189",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "56719",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "6189",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "57135",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "9012",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "58526",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "58526",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "60832",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "58807",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "6850",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "58808",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "1042",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "58809",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "9013",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "59756",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "60663",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "1042",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "60832",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "58526",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "127.0.0.1",
-      "localPort": "63342",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "172.19.224.1",
-      "localPort": "139",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "172.31.64.1",
-      "localPort": "139",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "139",
-      "peerAddress": "0.0.0.0",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "49283",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "49895",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "49896",
-      "peerAddress": "192.168.10.10",
-      "peerPort": "80",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "49898",
-      "peerAddress": "13.107.246.33",
-      "peerPort": "443",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "49900",
-      "peerAddress": "17.249.252.4",
-      "peerPort": "5223",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "49935",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "49957",
-      "peerAddress": "190.98.160.97",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "50268",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "50596",
-      "peerAddress": "3.222.211.63",
-      "peerPort": "443",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "50643",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "50852",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "50873",
-      "peerAddress": "23.14.87.9",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "50906",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "50963",
-      "peerAddress": "64.31.17.54",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "51007",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "51113",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "51118",
-      "peerAddress": "157.240.197.60",
-      "peerPort": "5222",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "51191",
-      "peerAddress": "54.83.60.46",
-      "peerPort": "443",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "51215",
-      "peerAddress": "3.175.45.15",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "51401",
-      "peerAddress": "108.157.173.64",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "51577",
-      "peerAddress": "108.157.173.64",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "51926",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "52216",
-      "peerAddress": "157.240.197.60",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "52448",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "52532",
-      "peerAddress": "157.240.197.60",
-      "peerPort": "443",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "52625",
-      "peerAddress": "35.186.241.51",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "52815",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "52955",
-      "peerAddress": "23.23.118.221",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "52961",
-      "peerAddress": "15.197.213.252",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "53217",
-      "peerAddress": "108.157.173.64",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "53279",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "53294",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "53416",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "53425",
-      "peerAddress": "212.102.60.121",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "53976",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54109",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54178",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54379",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54384",
-      "peerAddress": "172.64.154.106",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54448",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54556",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54612",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54660",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54902",
-      "peerAddress": "3.175.45.37",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54957",
-      "peerAddress": "23.14.87.10",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54967",
-      "peerAddress": "23.14.87.42",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "54979",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "55079",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "55385",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "55800",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "55912",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "56055",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "56099",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "56180",
-      "peerAddress": "184.25.116.27",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "56182",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "56341",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "56404",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "56624",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "56729",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "56813",
-      "peerAddress": "142.251.0.188",
-      "peerPort": "5228",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "56966",
-      "peerAddress": "52.9.163.1",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "56971",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "57293",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "57465",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "57752",
-      "peerAddress": "190.98.160.82",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "57753",
-      "peerAddress": "190.98.160.98",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "58083",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "58474",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "58760",
-      "peerAddress": "172.64.148.235",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "59108",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "59109",
-      "peerAddress": "108.157.173.64",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "59213",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "59214",
-      "peerAddress": "192.168.18.8",
-      "peerPort": "7070",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "59401",
-      "peerAddress": "104.208.203.88",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "59405",
-      "peerAddress": "192.168.10.1",
-      "peerPort": "8291",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "59450",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "59858",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "59861",
-      "peerAddress": "140.82.114.25",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "59918",
-      "peerAddress": "192.168.18.13",
-      "peerPort": "55416",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "60012",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "60016",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "60127",
-      "peerAddress": "190.98.160.114",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "60265",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "60271",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "60594",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "60596",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "60694",
-      "peerAddress": "54.71.172.39",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "61283",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "61305",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "61365",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "61656",
-      "peerAddress": "151.101.195.9",
-      "peerPort": "443",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "61756",
-      "peerAddress": "52.5.74.224",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "62329",
-      "peerAddress": "108.157.173.64",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "62756",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "63005",
-      "peerAddress": "192.168.10.10",
-      "peerPort": "22",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "63165",
-      "peerAddress": "140.82.113.26",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "63860",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "63918",
-      "peerAddress": "190.98.160.114",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "63948",
-      "peerAddress": "162.247.243.29",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "63951",
-      "peerAddress": "162.159.129.53",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "64049",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "64522",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "64536",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "64600",
-      "peerAddress": "54.83.201.223",
-      "peerPort": "443",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "64712",
-      "peerAddress": "17.179.252.2",
-      "peerPort": "443",
-      "state": "CLOSE_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "64713",
-      "peerAddress": "17.179.252.18",
-      "peerPort": "443",
-      "state": "CLOSE_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "64888",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "64980",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "65195",
-      "peerAddress": "190.98.160.89",
-      "peerPort": "443",
-      "state": "CLOSE_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "65196",
-      "peerAddress": "190.98.160.82",
-      "peerPort": "443",
-      "state": "CLOSE_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "65204",
-      "peerAddress": "108.157.173.56",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "192.168.10.12",
-      "localPort": "65500",
-      "peerAddress": "108.157.173.16",
-      "peerPort": "443",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "22",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "135",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "445",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "2179",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "3000",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "3085",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "3389",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "5432",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "5985",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "6379",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "7070",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "7680",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "15611",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "27017",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "47001",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "49340",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "49664",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "49665",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "49666",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "49667",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "49669",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "49679",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "50080",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "50304",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "50443",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "52627",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "53425",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "60730",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::",
-      "localPort": "62273",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "3000",
-      "peerAddress": "::1",
-      "peerPort": "59933",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "49899",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "50316",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "50402",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "51751",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "52345",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "52610",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "53054",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "53141",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "53630",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "53906",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "53961",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "54066",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "54396",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "54541",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "54555",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "54594",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "54719",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "55482",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "55503",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "55732",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "55861",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "56758",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "56962",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "57022",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "57201",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "57433",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "57509",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "57514",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "58116",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "58383",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "58484",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "58767",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "58900",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "59981",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "60713",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "60942",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "61274",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "61792",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "62777",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "62972",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "63179",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "63244",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "63303",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "63534",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "64177",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "64199",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "64640",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "64866",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5173",
-      "peerAddress": "::1",
-      "peerPort": "64875",
-      "state": "TIME_WAIT",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "5432",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "6379",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "6379",
-      "peerAddress": "::1",
-      "peerPort": "57773",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "27017",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "42050",
-      "peerAddress": "::",
-      "peerPort": "0",
-      "state": "LISTEN",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "51751",
-      "peerAddress": "::1",
-      "peerPort": "5173",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "57773",
-      "peerAddress": "::1",
-      "peerPort": "6379",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "tcp",
-      "localAddress": "::1",
-      "localPort": "59933",
-      "peerAddress": "::1",
-      "peerPort": "3000",
-      "state": "ESTABLISHED",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "53",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "53",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "123",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "500",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "3389",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "4500",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5050",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "5355",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "21119",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "52427",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "53534",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "54212",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "54502",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "56867",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "57873",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "58415",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "58416",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "58417",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "58418",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "58766",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "59870",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "59871",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "0.0.0.0",
-      "localPort": "65278",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "1900",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "10010",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "10011",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "50477",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "52153",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "52154",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "52154",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "52153",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "52155",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "52156",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "52156",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "52155",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "58765",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "58765",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "59992",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "59993",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "59993",
-      "peerAddress": "127.0.0.1",
-      "peerPort": "59992",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "127.0.0.1",
-      "localPort": "60975",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.19.224.1",
-      "localPort": "67",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.19.224.1",
-      "localPort": "68",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.19.224.1",
-      "localPort": "137",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.19.224.1",
-      "localPort": "138",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.19.224.1",
-      "localPort": "1900",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.19.224.1",
-      "localPort": "2177",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.19.224.1",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.19.224.1",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.19.224.1",
-      "localPort": "50474",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.31.64.1",
-      "localPort": "137",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.31.64.1",
-      "localPort": "138",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.31.64.1",
-      "localPort": "1900",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.31.64.1",
-      "localPort": "2177",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.31.64.1",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.31.64.1",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "172.31.64.1",
-      "localPort": "50475",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "192.168.10.12",
-      "localPort": "137",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "192.168.10.12",
-      "localPort": "138",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "192.168.10.12",
-      "localPort": "1900",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "192.168.10.12",
-      "localPort": "2177",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "192.168.10.12",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "192.168.10.12",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "192.168.10.12",
-      "localPort": "50476",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "123",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "500",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "3389",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "4500",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "53535",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "54213",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "54502",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "57874",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "58415",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "58416",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "58417",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "58418",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "58767",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::",
-      "localPort": "65278",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::1",
-      "localPort": "1900",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::1",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::1",
-      "localPort": "5353",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "::1",
-      "localPort": "50473",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "fe80::5406:a90a:d966:f689%34",
-      "localPort": "1900",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "fe80::5406:a90a:d966:f689%34",
-      "localPort": "2177",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "fe80::5406:a90a:d966:f689%34",
-      "localPort": "50471",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "fe80::ae56:2139:e2c1:9b9e%45",
-      "localPort": "1900",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "fe80::ae56:2139:e2c1:9b9e%45",
-      "localPort": "2177",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    },
-    {
-      "protocol": "udp",
-      "localAddress": "fe80::ae56:2139:e2c1:9b9e%45",
-      "localPort": "50472",
-      "peerAddress": "*",
-      "peerPort": "*",
-      "state": "",
-      "process": ""
-    }
-  ]
+        chain DOCKER-FORWARD {
+                counter packets 0 bytes 0 jump DOCKER-CT
+                counter packets 0 bytes 0 jump DOCKER-INTERNAL
+                counter packets 0 bytes 0 jump DOCKER-BRIDGE
+        }
+
+        chain DOCKER-USER {
+        }
+
+        chain ufw6-after-forward {
+        }
+
+        chain ufw6-after-input {
+                meta l4proto udp udp dport 137 counter packets 0 bytes 0 jump ufw6-skip-to-policy-input
+                meta l4proto udp udp dport 138 counter packets 0 bytes 0 jump ufw6-skip-to-policy-input
+                meta l4proto tcp tcp dport 139 counter packets 0 bytes 0 jump ufw6-skip-to-policy-input
+                meta l4proto tcp tcp dport 445 counter packets 0 bytes 0 jump ufw6-skip-to-policy-input
+                meta l4proto udp udp dport 546 counter packets 0 bytes 0 jump ufw6-skip-to-policy-input
+                meta l4proto udp udp dport 547 counter packets 0 bytes 0 jump ufw6-skip-to-policy-input
+        }
+
+        chain ufw6-after-logging-forward {
+                limit rate 3/minute burst 10 packets counter packets 0 bytes 0 log prefix "[UFW BLOCK] "
+        }
+
+        chain ufw6-after-logging-input {
+                limit rate 3/minute burst 10 packets counter packets 0 bytes 0 log prefix "[UFW BLOCK] "
+        }
+
+        chain ufw6-after-logging-output {
+        }
+
+        chain ufw6-after-output {
+        }
+
+        chain ufw6-before-forward {
+                rt type 0 counter packets 0 bytes 0 drop
+                ct state related,established counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type destination-unreachable counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type packet-too-big counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type time-exceeded counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type parameter-problem counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type echo-request counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type echo-reply counter packets 0 bytes 0 accept
+                counter packets 0 bytes 0 jump ufw6-user-forward
+        }
+
+        chain ufw6-before-input {
+                iifname "lo" counter packets 35690 bytes 2087865 accept
+                rt type 0 counter packets 0 bytes 0 drop
+                ct state related,established counter packets 8 bytes 1056 accept
+                meta l4proto ipv6-icmp icmpv6 type echo-reply counter packets 0 bytes 0 accept
+                ct state invalid counter packets 0 bytes 0 jump ufw6-logging-deny
+                ct state invalid counter packets 0 bytes 0 drop
+                meta l4proto ipv6-icmp icmpv6 type destination-unreachable counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type packet-too-big counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type time-exceeded counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type parameter-problem counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type echo-request counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type nd-router-solicit ip6 hoplimit 255 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type nd-router-advert ip6 hoplimit 255 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type nd-neighbor-solicit ip6 hoplimit 255 counter packets 2 bytes 144 accept
+                meta l4proto ipv6-icmp icmpv6 type nd-neighbor-advert ip6 hoplimit 255 counter packets 9 bytes 632 accept
+                meta l4proto ipv6-icmp icmpv6 type  ip6 hoplimit 255 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type  ip6 hoplimit 255 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type  ip6 hoplimit 255 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type  ip6 hoplimit 255 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  ip6 hoplimit 1 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  ip6 hoplimit 1 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  ip6 hoplimit 1 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto udp ip6 saddr fe80::/10 ip6 daddr fe80::/10 udp sport 547 udp dport 546 counter packets 0 bytes 0 accept
+                meta l4proto udp ip6 daddr ff02::fb udp dport 5353 counter packets 0 bytes 0 accept
+                meta l4proto udp ip6 daddr ff02::f udp dport 1900 counter packets 0 bytes 0 accept
+                counter packets 0 bytes 0 jump ufw6-user-input
+        }
+
+        chain ufw6-before-logging-forward {
+        }
+
+        chain ufw6-before-logging-input {
+        }
+
+        chain ufw6-before-logging-output {
+        }
+
+        chain ufw6-before-output {
+                oifname "lo" counter packets 35690 bytes 2087865 accept
+                rt type 0 counter packets 0 bytes 0 drop
+                ct state related,established counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type destination-unreachable counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type packet-too-big counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type time-exceeded counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type parameter-problem counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type echo-request counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type echo-reply counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type nd-router-solicit ip6 hoplimit 255 counter packets 89 bytes 4864 accept
+                meta l4proto ipv6-icmp icmpv6 type nd-neighbor-advert ip6 hoplimit 255 counter packets 2 bytes 128 accept
+                meta l4proto ipv6-icmp icmpv6 type nd-neighbor-solicit ip6 hoplimit 255 counter packets 2 bytes 144 accept
+                meta l4proto ipv6-icmp icmpv6 type nd-router-advert ip6 hoplimit 255 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type  ip6 hoplimit 255 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type  ip6 hoplimit 255 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type  ip6 hoplimit 255 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp icmpv6 type  ip6 hoplimit 255 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  ip6 hoplimit 1 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  ip6 hoplimit 1 counter packets 0 bytes 0 accept
+                meta l4proto ipv6-icmp ip6 saddr fe80::/10 icmpv6 type  ip6 hoplimit 1 counter packets 0 bytes 0 accept
+                counter packets 8 bytes 672 jump ufw6-user-output
+        }
+
+        chain ufw6-reject-forward {
+        }
+
+        chain ufw6-reject-input {
+        }
+
+        chain ufw6-reject-output {
+        }
+
+        chain ufw6-track-forward {
+        }
+
+        chain ufw6-track-input {
+        }
+
+        chain ufw6-track-output {
+                meta l4proto tcp ct state new counter packets 6 bytes 480 accept
+                meta l4proto udp ct state new counter packets 2 bytes 192 accept
+        }
+
+        chain DOCKER {
+        }
+
+        chain DOCKER-BRIDGE {
+        }
+
+        chain DOCKER-CT {
+        }
+
+        chain DOCKER-INTERNAL {
+        }
+
+        chain ufw6-logging-deny {
+                ct state invalid limit rate 3/minute burst 10 packets counter packets 0 bytes 0 return
+                limit rate 3/minute burst 10 packets counter packets 0 bytes 0 log prefix "[UFW BLOCK] "
+        }
+
+        chain ufw6-logging-allow {
+                limit rate 3/minute burst 10 packets counter packets 0 bytes 0 log prefix "[UFW ALLOW] "
+        }
+
+        chain ufw6-skip-to-policy-input {
+                counter packets 0 bytes 0 drop
+        }
+
+        chain ufw6-skip-to-policy-output {
+                counter packets 0 bytes 0 accept
+        }
+
+        chain ufw6-skip-to-policy-forward {
+                counter packets 0 bytes 0 drop
+        }
+
+        chain ufw6-user-input {
+                meta l4proto udp udp dport 21113 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 21115 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 21116 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 9091 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 9090 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 1194 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 22  counter packets 0 bytes 0 accept
+                meta l4proto udp udp dport 51820 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 8081 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 80 counter packets 0 bytes 0 accept
+                meta l4proto udp udp dport 7844 counter packets 0 bytes 0 accept
+                meta l4proto udp udp dport 443 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 443 counter packets 0 bytes 0 accept
+                meta l4proto tcp tcp dport 3456 counter packets 0 bytes 0 accept
+        }
+
+        chain ufw6-user-output {
+        }
+
+        chain ufw6-user-forward {
+        }
+
+        chain ufw6-user-logging-input {
+        }
+
+        chain ufw6-user-logging-output {
+        }
+
+        chain ufw6-user-logging-forward {
+        }
+
+        chain ufw6-user-limit {
+                limit rate 3/minute counter packets 0 bytes 0 log prefix "[UFW LIMIT BLOCK] "
+                counter packets 0 bytes 0 reject
+        }
+
+        chain ufw6-user-limit-accept {
+                counter packets 0 bytes 0 accept
+        }
 }
+table ip6 nat {
+        chain PREROUTING {
+                type nat hook prerouting priority dstnat; policy accept;
+                fib daddr type local counter packets 2 bytes 224 jump DOCKER
+        }
 
---------------------------------------------------------------------------------
+        chain INPUT {
+                type nat hook input priority 100; policy accept;
+        }
 
-### SSH Audit Logs
-Method: GET
-URL: http://localhost:3456/security/ssh
-Headers: { "x-api-key": "secret-agent-key" }
+        chain OUTPUT {
+                type nat hook output priority -100; policy accept;
+                ip6 daddr != ::1 fib daddr type local counter packets 0 bytes 0 jump DOCKER
+        }
 
-Status: 200
-Body:
-{
-  "activity": {
-    "status": "unavailable",
-    "message": "SSH logs not found or OS not supported (Linux required)",
-    "platform": "win32"
-  }
+        chain POSTROUTING {
+                type nat hook postrouting priority srcnat; policy accept;
+        }
+
+        chain DOCKER {
+        }
 }
-
---------------------------------------------------------------------------------
-
-### Security Audit (Score)
-Method: GET
-URL: http://localhost:3456/security/audit
-Headers: { "x-api-key": "secret-agent-key" }
-
-Status: 200
-Body:
-{
-  "audit": {
-    "score": 100,
-    "findings": [],
-    "details": {
-      "open_ports": 105
-    },
-    "grade": "A"
-  }
-}
-
---------------------------------------------------------------------------------
-
-### Threat Map (GeoIP)
-Method: GET
-URL: http://localhost:3456/network/map
-Headers: { "x-api-key": "secret-agent-key" }
-
-Status: 200
-Body:
-{
-  "map": {
-    "total_connections": 102,
-    "mapped_ips": 10,
-    "connections": [
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "49283",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "49895",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "49896",
-        "peerAddress": "192.168.10.10",
-        "peerPort": "80",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "192.168.10.10",
-          "type": "private",
-          "country": "Local Network",
-          "city": "-"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "49900",
-        "peerAddress": "17.249.252.4",
-        "peerPort": "5223",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "17.249.252.4",
-          "type": "public",
-          "country": "United States",
-          "city": "Cupertino",
-          "lat": 37.3322,
-          "lon": -122.011,
-          "isp": "Apple Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "49935",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "49957",
-        "peerAddress": "190.98.160.97",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "190.98.160.97",
-          "type": "public",
-          "country": "Argentina",
-          "city": "Buenos Aires",
-          "lat": -34.6033,
-          "lon": -58.3769,
-          "isp": "Akamai International B.V."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "50268",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "50643",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "50852",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "50873",
-        "peerAddress": "23.14.87.9",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "23.14.87.9",
-          "type": "public",
-          "country": "Chile",
-          "city": "Santiago",
-          "lat": -33.4521,
-          "lon": -70.6536,
-          "isp": "Akamai International B.V."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "50906",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "50963",
-        "peerAddress": "64.31.17.54",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "64.31.17.54",
-          "type": "public",
-          "country": "United States",
-          "city": "Miami",
-          "lat": 25.7701,
-          "lon": -80.1928,
-          "isp": "Limestone Networks, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "51007",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "51113",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "51118",
-        "peerAddress": "157.240.197.60",
-        "peerPort": "5222",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "157.240.197.60",
-          "type": "public",
-          "country": "Peru",
-          "city": "Lima",
-          "lat": -12.046,
-          "lon": -77.0305,
-          "isp": "Facebook, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "51215",
-        "peerAddress": "3.175.45.15",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "3.175.45.15",
-          "type": "public",
-          "country": "Peru",
-          "city": "Lima",
-          "lat": -12.0464,
-          "lon": -77.0428,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "51401",
-        "peerAddress": "108.157.173.64",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.64",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "51577",
-        "peerAddress": "108.157.173.64",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.64",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "51926",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "52216",
-        "peerAddress": "157.240.197.60",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "157.240.197.60",
-          "type": "public",
-          "country": "Peru",
-          "city": "Lima",
-          "lat": -12.046,
-          "lon": -77.0305,
-          "isp": "Facebook, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "52448",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "52625",
-        "peerAddress": "35.186.241.51",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "52815",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "52955",
-        "peerAddress": "23.23.118.221",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "52961",
-        "peerAddress": "15.197.213.252",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "53217",
-        "peerAddress": "108.157.173.64",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.64",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "53279",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "53294",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "53416",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "53425",
-        "peerAddress": "212.102.60.121",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "53976",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54109",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54178",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54379",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54384",
-        "peerAddress": "172.64.154.106",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54448",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54556",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54612",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54660",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54902",
-        "peerAddress": "3.175.45.37",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54957",
-        "peerAddress": "23.14.87.10",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54967",
-        "peerAddress": "23.14.87.42",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "54979",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "55079",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "55385",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "55800",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "55912",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "56055",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "56099",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "56180",
-        "peerAddress": "184.25.116.27",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "56182",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "56341",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "56404",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "56624",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "56729",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "56813",
-        "peerAddress": "142.251.0.188",
-        "peerPort": "5228",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "56966",
-        "peerAddress": "52.9.163.1",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "56971",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "57293",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "57465",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "57752",
-        "peerAddress": "190.98.160.82",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "57753",
-        "peerAddress": "190.98.160.98",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "58083",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "58474",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "58760",
-        "peerAddress": "172.64.148.235",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "59108",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "59109",
-        "peerAddress": "108.157.173.64",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.64",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "59213",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "59214",
-        "peerAddress": "192.168.18.8",
-        "peerPort": "7070",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "59401",
-        "peerAddress": "104.208.203.88",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "59405",
-        "peerAddress": "192.168.10.1",
-        "peerPort": "8291",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "59450",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "59858",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "59861",
-        "peerAddress": "140.82.114.25",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "59918",
-        "peerAddress": "192.168.18.13",
-        "peerPort": "55416",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "60012",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "60016",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "60127",
-        "peerAddress": "190.98.160.114",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "60265",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "60271",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "60594",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "60596",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "60694",
-        "peerAddress": "54.71.172.39",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "61283",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "61305",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "61365",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "61756",
-        "peerAddress": "52.5.74.224",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "62329",
-        "peerAddress": "108.157.173.64",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.64",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "62756",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "63005",
-        "peerAddress": "192.168.10.10",
-        "peerPort": "22",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "192.168.10.10",
-          "type": "private",
-          "country": "Local Network",
-          "city": "-"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "63165",
-        "peerAddress": "140.82.113.26",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "63860",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "63918",
-        "peerAddress": "190.98.160.114",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "63948",
-        "peerAddress": "162.247.243.29",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "63951",
-        "peerAddress": "162.159.129.53",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "country": "Unknown"
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "64049",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "64522",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "64536",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "64888",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "64980",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "65204",
-        "peerAddress": "108.157.173.56",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.56",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      },
-      {
-        "protocol": "tcp",
-        "localAddress": "192.168.10.12",
-        "localPort": "65500",
-        "peerAddress": "108.157.173.16",
-        "peerPort": "443",
-        "state": "ESTABLISHED",
-        "process": "",
-        "geo": {
-          "ip": "108.157.173.16",
-          "type": "public",
-          "country": "United States",
-          "city": "Ashburn",
-          "lat": 39.0438,
-          "lon": -77.4874,
-          "isp": "Amazon.com, Inc."
-        }
-      }
-    ]
-  }
-}
-
---------------------------------------------------------------------------------
-
-### Docker Stats
-Method: GET
-URL: http://localhost:3456/system/docker
-Headers: { "x-api-key": "secret-agent-key" }
-
-Status: 200
-Body:
-{
-  "data": {
-    "info": {
-      "containers": 7,
-      "running": 3,
-      "paused": 0,
-      "stopped": 4,
-      "images": 8
-    },
-    "containers": [
-      {
-        "id": "bd624d84c521",
-        "name": "kali",
-        "image": "pentest-copilot-kali",
-        "state": "restarting",
-        "created": "2026-02-11T16:20:30.019509316Z",
-        "ports": []
-      },
-      {
-        "id": "84158c93b6f1",
-        "name": "pentest-copilot-mongodb-1",
-        "image": "mongo:latest",
-        "state": "running",
-        "created": "2026-02-11T16:20:30.019420256Z",
-        "ports": [
-          {
-            "IP": "0.0.0.0",
-            "PrivatePort": 27017,
-            "PublicPort": 27017,
-            "Type": "tcp"
-          },
-          {
-            "IP": "::",
-            "PrivatePort": 27017,
-            "PublicPort": 27017,
-            "Type": "tcp"
-          }
-        ]
-      },
-      {
-        "id": "fca2cd702158",
-        "name": "redis_ms_auth",
-        "image": "redis:7",
-        "state": "running",
-        "created": "2025-10-05T20:59:52.554770963Z",
-        "ports": [
-          {
-            "IP": "0.0.0.0",
-            "PrivatePort": 6379,
-            "PublicPort": 6379,
-            "Type": "tcp"
-          },
-          {
-            "IP": "::",
-            "PrivatePort": 6379,
-            "PublicPort": 6379,
-            "Type": "tcp"
-          }
-        ]
-      },
-      {
-        "id": "e3a1d253214e",
-        "name": "postgres_ms_auth",
-        "image": "postgres:15",
-        "state": "running",
-        "created": "2025-10-05T20:59:52.54752876Z",
-        "ports": [
-          {
-            "IP": "0.0.0.0",
-            "PrivatePort": 5432,
-            "PublicPort": 5432,
-            "Type": "tcp"
-          },
-          {
-            "IP": "::",
-            "PrivatePort": 5432,
-            "PublicPort": 5432,
-            "Type": "tcp"
-          }
-        ]
-      }
-    ]
-  }
-}
-
---------------------------------------------------------------------------------
-
-### Active Users
-Method: GET
-URL: http://localhost:3456/system/users
-Headers: { "x-api-key": "secret-agent-key" }
-
-Status: 200
-Body:
-{
-  "count": 1,
-  "users": [
-    {
-      "user": "yorlin",
-      "tty": "console",
-      "date": "2026-01-19",
-      "time": "23:30:50",
-      "ip": "",
-      "command": ""
-    }
-  ]
-}
-
---------------------------------------------------------------------------------
-
-### Service Status (Docker)
-Method: GET
-URL: http://localhost:3456/system/services?name=docker
-Headers: { "x-api-key": "secret-agent-key" }
-
-Status: 200
-Body:
-{
-  "services": [
-    {
-      "name": "docker",
-      "running": false,
-      "startmode": "",
-      "pids": []
-    }
-  ]
-}
-
---------------------------------------------------------------------------------
-
-### Service Logs (SSHD Example)
-Method: GET
-URL: http://localhost:3456/system/services/sshd/logs?lines=10
-Headers: { "x-api-key": "secret-agent-key" }
-
-Status: 200
-Body:
-{
-  "logs": "Error retrieving service logs: spawn journalctl ENOENT"
-}
-
---------------------------------------------------------------------------------
-
-### Service Status Detail (SSHD Example)
-Method: GET
-URL: http://localhost:3456/system/services/sshd/status
-Headers: { "x-api-key": "secret-agent-key" }
-
-Status: 200
-Body:
-{
-  "status": "spawn systemctl ENOENT"
-}
-
---------------------------------------------------------------------------------
-
