@@ -15,13 +15,14 @@ if (!fs.existsSync(KEYS_DIR)) {
 
 let keyPair = null;
 let agentSecret = null;
+let sessionToken = null; // Token rotativo de sesión (en memoria)
 
 /**
  * Inicializa el sistema criptográfico del agente
  * Genera claves RSA si no existen y rota el API Secret si es necesario
  */
 function initCrypto() {
-  // 1. Cargar o Generar API Secret
+  // 1. Cargar o Generar API Secret (Master Key persistente)
   if (fs.existsSync(SECRET_FILE_PATH)) {
     agentSecret = fs.readFileSync(SECRET_FILE_PATH, 'utf8').trim();
   } else {
@@ -34,7 +35,13 @@ function initCrypto() {
     console.log('==================================================\n');
   }
 
-  // 2. Cargar o Generar RSA Keys (2048 bits)
+  // 2. Generar Session Token (Rotativo, solo en memoria)
+  sessionToken = crypto.randomUUID();
+  console.log('🎟️  SESSION TOKEN GENERADO (Válido hasta reinicio):');
+  console.log(`   ${sessionToken}`);
+  console.log('--------------------------------------------------');
+
+  // 3. Cargar o Generar RSA Keys (2048 bits)
   if (fs.existsSync(PRIVATE_KEY_PATH) && fs.existsSync(PUBLIC_KEY_PATH)) {
     const privateKeyData = fs.readFileSync(PRIVATE_KEY_PATH, 'utf8');
     keyPair = new NodeRSA(privateKeyData);
@@ -72,10 +79,10 @@ function getPublicKey() {
 }
 
 /**
- * Valida si el API Token proporcionado coincide con el secreto
+ * Valida si el token proporcionado es válido (Master Key o Session Token)
  */
 function validateToken(token) {
-  return token === agentSecret;
+  return token === agentSecret || token === sessionToken;
 }
 
 module.exports = {
@@ -83,5 +90,6 @@ module.exports = {
   getPublicKey,
   decrypt,
   validateToken,
-  getAgentSecret: () => agentSecret
+  getAgentSecret: () => agentSecret,
+  getSessionToken: () => sessionToken
 };

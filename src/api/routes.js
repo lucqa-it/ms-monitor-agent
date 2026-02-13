@@ -56,7 +56,8 @@ async function routes(fastify, options) {
     // Validar Token
     // Nota: Solo aceptamos el token seguro generado por el sistema criptográfico
     // Se elimina el fallback a config.API_KEY para máxima seguridad
-    if (!token || token !== cryptoManager.getAgentSecret()) {
+    // Aceptamos Master Key (agentSecret) O Session Token (sessionToken)
+    if (!token || !cryptoManager.validateToken(token)) {
       reply.code(401).send({ error: 'Unauthorized', message: 'Invalid or missing API credentials' });
       return reply;
     }
