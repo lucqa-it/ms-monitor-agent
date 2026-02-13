@@ -192,6 +192,42 @@ async function routes(fastify, options) {
 
   // --- Endpoints Filesystem ---
 
+  fastify.get('/system/fs/list', async (request, reply) => {
+    const targetPath = request.query.path || (process.platform === 'win32' ? process.cwd() : '/var/log');
+    const limit = request.query.limit;
+    const offset = request.query.offset;
+    try {
+      const result = await filesystem.listDirectory(targetPath, { limit, offset });
+      return result;
+    } catch (e) {
+      reply.code(400).send({ error: e.message });
+    }
+  });
+
+  fastify.get('/system/fs/stat', async (request, reply) => {
+    const targetPath = request.query.path;
+    try {
+      const result = await filesystem.statPath(targetPath);
+      return result;
+    } catch (e) {
+      reply.code(400).send({ error: e.message });
+    }
+  });
+
+  fastify.get('/system/fs/read', async (request, reply) => {
+    const targetPath = request.query.path;
+    const offset = request.query.offset;
+    const tailBytes = request.query.tailBytes;
+    const maxBytes = request.query.maxBytes;
+    const encoding = request.query.encoding;
+    try {
+      const result = await filesystem.readFileChunk(targetPath, { offset, tailBytes, maxBytes, encoding });
+      return result;
+    } catch (e) {
+      reply.code(400).send({ error: e.message });
+    }
+  });
+
   fastify.get('/system/files/large', async (request, reply) => {
     const dirPath = request.query.path || '/var';
     const minSize = request.query.min || '100M';

@@ -306,6 +306,101 @@
 			"name": "Filesystem",
 			"item": [
 				{
+					"name": "FS List Directory",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/fs/list?path=/var/log&limit=200&offset=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"fs",
+								"list"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "/var/log"
+								},
+								{
+									"key": "limit",
+									"value": "200"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "FS Stat Path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/fs/stat?path=/var/log/syslog",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"fs",
+								"stat"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "/var/log/syslog"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "FS Read File (Tail)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/system/fs/read?path=/var/log/syslog&tailBytes=8192&maxBytes=8192&encoding=utf8",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system",
+								"fs",
+								"read"
+							],
+							"query": [
+								{
+									"key": "path",
+									"value": "/var/log/syslog"
+								},
+								{
+									"key": "tailBytes",
+									"value": "8192"
+								},
+								{
+									"key": "maxBytes",
+									"value": "8192"
+								},
+								{
+									"key": "encoding",
+									"value": "utf8"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Find Large Files",
 					"request": {
 						"method": "GET",

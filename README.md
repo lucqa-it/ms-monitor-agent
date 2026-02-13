@@ -86,6 +86,12 @@ Este agente implementa un **Handshake Criptográfico** con Token de Sesión Rota
 
 **Ventaja**: Si reinicias el agente, el token anterior se invalida. Si te roban el código, no hay claves hardcodeadas.
 
+## ⚙️ Configuración de Filesystem Explorer
+
+El explorador de archivos restringe rutas por seguridad. Puedes ampliar/reducir lo permitido con:
+
+- `FS_ALLOWED_ROOTS`: lista separada por comas de directorios permitidos (ej: `/var/log,/tmp,/opt`).
+
 ---
 
 ## 📡 API Endpoints
@@ -107,7 +113,11 @@ Este agente implementa un **Handshake Criptográfico** con Token de Sesión Rota
 | :--- | :--- | :--- |
 | `GET` | `/system/docker` | Listado de contenedores. |
 | `GET` | `/system/services` | Estado de servicios Systemd. |
+| `GET` | `/system/fs/list` | Listar directorios (explorador). |
+| `GET` | `/system/fs/stat` | Metadata de archivo/directorio. |
+| `GET` | `/system/fs/read` | Leer fragmento de archivo (preview). |
 | `GET` | `/system/files/large` | Buscar archivos pesados. |
+| `DELETE` | `/system/files` | Eliminar archivo. |
 
 ---
 
