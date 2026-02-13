@@ -6,10 +6,14 @@ const routes = require('./routes');
  * Factoría para crear el servidor API
  */
 function buildServer() {
+  const isDev = config.ENV === 'development';
+  
   const app = fastify({
     logger: {
       level: config.LOG_LEVEL,
-      transport: config.ENV === 'development' ? {
+      // Solo usar pino-pretty en desarrollo local real
+      // En producción (PM2/Docker), usar log JSON estándar (mucho más rápido y seguro)
+      transport: isDev ? {
         target: 'pino-pretty',
         options: {
           translateTime: 'HH:MM:ss Z',
