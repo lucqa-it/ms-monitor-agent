@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  monitor-agent:
+    build: .
+    image: monitor-agent:latest
+    container_name: monitor-agent
+    restart: unless-stopped
+    # NOTA: Al usar Traefik, no podemos usar network_mode: "host" fácilmente.
+    # Usamos modo bridge y montamos volúmenes adicionales para mantener la visibilidad del host.
+    pid: "host"          # Crucial para ver procesos del host real
+    privileged: true     # Necesario para acceder a métricas de hardware y logs del sistema
+    
+    networks:
+      - traefik-net
+      
+    env_file:
+      - .env
+      
+    environment:
+      - PORT=3456
+      - NODE_ENV=production
+      
+    volumes:
+      # Acceso al socket de Docker del host
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      
+      # Acceso a logs del sistema
+      - /var/log:/var/log:ro
+      
+      # Acceso a información del sistema (Hardware, Kernel)
+      - /proc:/proc:ro
+      - /sys:/sys:ro
+      
+      # Persistencia de claves seguras
+      - agent-secure-data:/app/secure
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.monitor-agent.rule=Host(`monitor.local.lucqa`)"
+      - "traefik.http.routers.monitor-agent.entrypoints=web"
+      - "traefik.http.services.monitor-agent.loadbalancer.server.port=3456"
+      - "traefik.docker.network=traefik-net"
+
+volumes:
+  agent-secure-data:
+
+networks:
+  traefik-net:
+    external: true
