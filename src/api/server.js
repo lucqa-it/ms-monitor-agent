@@ -7,19 +7,27 @@ const routes = require('./routes');
  */
 function buildServer() {
   const isDev = config.ENV === 'development';
-  
-  const app = fastify({
-    logger: {
-      level: config.LOG_LEVEL,
-      // Solo usar pino-pretty en desarrollo local real
-      // En producción (PM2/Docker), usar log JSON estándar (mucho más rápido y seguro)
-      transport: isDev ? {
+
+  let transport;
+  if (isDev) {
+    try {
+      require.resolve('pino-pretty');
+      transport = {
         target: 'pino-pretty',
         options: {
           translateTime: 'HH:MM:ss Z',
-          ignore: 'pid,hostname',
-        },
-      } : undefined,
+          ignore: 'pid,hostname'
+        }
+      };
+    } catch (e) {
+      transport = undefined;
+    }
+  }
+
+  const app = fastify({
+    logger: {
+      level: config.LOG_LEVEL,
+      transport
     },
     // Optimización: Deshabilitar validación de esquema si no se usa intensivamente para ganar microsegundos,
     // pero mantenemos por seguridad por defecto.
